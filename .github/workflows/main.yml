@@ -9,7 +9,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
@@ -17,21 +16,52 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          # We'll remove caching for now as it's a monorepo setup
+          # or handle it differently if needed.
 
-      - name: Install dependencies
-        run: |
-          npm install
-          cd frontend && npm install
-          cd ../backend && npm install
+      - name: Install root dependencies
+        run: npm install
 
       - name: Build Frontend
         run: |
           cd frontend
+          npm install
           npm run build
 
-      - name: Test Backend
+      - name: Build Backend
         run: |
           cd backend
-          # Add your test command here if available
-          # npm test
+          npm install
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+              cd ${{ secrets.DEPLOY_PATH }} || exit
+              git pull origin master
+              
+              # Create production .env files from secrets
+              echo "${{ secrets.FRONTEND_ENV }}" > frontend/.env.production
+              echo "${{ secrets.BACKEND_ENV }}" > backend/.env.production
+              
+              # Build and restart frontend (if needed)
+              cd frontend
+              npm install
+              npm run build
+              
+              # Build and restart backend
+              cd ../backend
+              npm install
+              
+              # Restart using PM2 (highly recommended)
+              pm2 restart movifile-backend --update-env || pm2 start server.js --name movifile-backend
+              pm2 restart movifile-frontend --update-env || pm2 start "npm start" --name movifile-frontend
