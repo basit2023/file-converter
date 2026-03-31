@@ -46,14 +46,24 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
           script: |
-              cd ${{ secrets.DEPLOY_PATH }} || exit
-              git pull origin master
+              # Ensure the deployment path exists
+              mkdir -p ${{ secrets.DEPLOY_PATH }}
+              cd ${{ secrets.DEPLOY_PATH }}
+              
+              # Check if it's already a git repository
+              if [ ! -d ".git" ]; then
+                echo "Initializing project (first time setup)..."
+                git clone https://github.com/basit2023/file-converter.git .
+              else
+                echo "Updating project..."
+                git pull origin master
+              fi
               
               # Create production .env files from secrets
               echo "${{ secrets.FRONTEND_ENV }}" > frontend/.env.production
               echo "${{ secrets.BACKEND_ENV }}" > backend/.env.production
               
-              # Build and restart frontend (if needed)
+              # Build and restart frontend
               cd frontend
               npm install
               npm run build
@@ -62,6 +72,6 @@ jobs:
               cd ../backend
               npm install
               
-              # Restart using PM2 (highly recommended)
+              # Restart using PM2
               pm2 restart movifile-backend --update-env || pm2 start server.js --name movifile-backend
               pm2 restart movifile-frontend --update-env || pm2 start "npm start" --name movifile-frontend
