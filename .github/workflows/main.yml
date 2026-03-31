@@ -55,7 +55,7 @@ jobs:
                 echo "Initializing project (first time setup)..."
                 git clone https://github.com/basit2023/file-converter.git .
               else
-                echo "Updating project..."
+                echo "Updating project... here in this line"
                 git pull origin master
               fi
               
