@@ -1,0 +1,38 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+
+# testing
+coverage
+
+# build
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+
+# misc
+.DS_Store
+*.pem
+*.log
+.vercel
+/node_modules
+/frontend/node_modules
+/backend/node_modules
+
+# env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.production
+.env.development
+
+# project specific
+uploads/
+outputs/
+temp/
