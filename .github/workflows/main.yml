@@ -42,30 +42,20 @@ jobs:
               npm install
               npm run build
               
-              # Install serve if not installed
-              sudo npm install -g serve || true
-              
-              # =========================
-              # BACKEND SETUP
-              # =========================
-              echo "--- Setting up Backend ---"
-              cd ../backend
-              npm install
-              
               # =========================
               # PM2 PROCESS MANAGEMENT
               # =========================
               echo "--- Restarting PM2 Services ---"
               
               # Backend (port 5000)
-              pm2 delete movifile-backend || true
-              pm2 start server.js --name movifile-backend
+              cd ${{ secrets.DEPLOY_PATH }}/backend
+              pm2 restart movifile-backend --update-env || pm2 start server.js --name movifile-backend
               
-              # Frontend (serve build on port 3000)
-              pm2 delete movifile-frontend || true
-              pm2 start serve --name movifile-frontend -- -s ../frontend/build -l 3000
+              # Frontend (Next.js port 3000)
+              cd ${{ secrets.DEPLOY_PATH }}/frontend
+              pm2 restart movifile-frontend --update-env || pm2 start "npm start" --name movifile-frontend
               
-              # Save PM2 processes (IMPORTANT)
+              # Save PM2 processes
               pm2 save
               
               echo "--- Deployment Successful ---"
