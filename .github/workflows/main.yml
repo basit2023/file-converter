@@ -61,9 +61,9 @@ jobs:
                 echo "--- Initializing project (first time setup) ---"
                 git clone https://github.com/basit2023/file-converter.git .
               else
-                echo "--- Updating project from master ---"
-                git fetch origin master
-                git reset --hard origin/master
+                echo "--- Updating project from ${{ github.ref_name }} ---"
+                git fetch origin ${{ github.ref_name }}
+                git reset --hard origin/${{ github.ref_name }}
               fi
               
               echo "--- Updating Environment Files ---"
