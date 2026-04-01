@@ -1,65 +1,72 @@
-- name: Deploy to VPS
-  uses: appleboy/ssh-action@master
-  with:
-    host: ${{ secrets.VPS_IP }}
-    username: ${{ secrets.VPS_USER }}
-    key: ${{ secrets.VPS_SSH_KEY }}
-    port: ${{ secrets.VPS_PORT || 22 }}
-    script: |
-        set -e
-        
-        echo "--- Starting Deployment ---"
-        mkdir -p ${{ secrets.DEPLOY_PATH }}
-        cd ${{ secrets.DEPLOY_PATH }}
-        
-        # Pull latest code
-        if [ ! -d ".git" ]; then
-          git clone https://github.com/basit2023/file-converter.git .
-        else
-          git fetch origin main
-          git reset --hard origin/main
-        fi
-        
-        echo "--- Environment Setup ---"
-        echo "${{ secrets.FRONTEND_ENV }}" > frontend/.env.production
-        echo "${{ secrets.BACKEND_ENV }}" > backend/.env
-        
-        # =========================
-        # FRONTEND SETUP
-        # =========================
-        echo "--- Building Frontend ---"
-        cd frontend
-        npm install
-        npm run build
-        
-        # Install serve if not installed
-        sudo npm install -g serve || true
-        
-        # =========================
-        # BACKEND SETUP
-        # =========================
-        echo "--- Setting up Backend ---"
-        cd ../backend
-        npm install
-        
-        # =========================
-        # PM2 PROCESS MANAGEMENT
-        # =========================
-        echo "--- Restarting PM2 Services ---"
-        
-        # Backend (port 5000)
-        pm2 delete movifile-backend || true
-        pm2 start server.js --name movifile-backend
-        
-        # Frontend (serve build on port 3000)
-        pm2 delete movifile-frontend || true
-        pm2 start serve --name movifile-frontend -- -s ../frontend/build -l 3000
-        
-        # Save PM2 processes (IMPORTANT)
-        pm2 save
-        
-        # Enable auto start on reboot
-        pm2 startup systemd -u $USER --hp $HOME
-        
-        echo "--- Deployment Successful ---"
-        pm2 status
+name: MoviFile Production CI/CD
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+              set -e
+              
+              echo "--- Starting Deployment ---"
+              mkdir -p ${{ secrets.DEPLOY_PATH }}
+              cd ${{ secrets.DEPLOY_PATH }}
+              
+              # Pull latest code
+              if [ ! -d ".git" ]; then
+                git clone https://github.com/basit2023/file-converter.git .
+              else
+                git fetch origin main
+                git reset --hard origin/main
+              fi
+              
+              echo "--- Environment Setup ---"
+              echo "${{ secrets.FRONTEND_ENV }}" > frontend/.env.production
+              echo "${{ secrets.BACKEND_ENV }}" > backend/.env
+              
+              # =========================
+              # FRONTEND SETUP
+              # =========================
+              echo "--- Building Frontend ---"
+              cd frontend
+              npm install
+              npm run build
+              
+              # Install serve if not installed
+              sudo npm install -g serve || true
+              
+              # =========================
+              # BACKEND SETUP
+              # =========================
+              echo "--- Setting up Backend ---"
+              cd ../backend
+              npm install
+              
+              # =========================
+              # PM2 PROCESS MANAGEMENT
+              # =========================
+              echo "--- Restarting PM2 Services ---"
+              
+              # Backend (port 5000)
+              pm2 delete movifile-backend || true
+              pm2 start server.js --name movifile-backend
+              
+              # Frontend (serve build on port 3000)
+              pm2 delete movifile-frontend || true
+              pm2 start serve --name movifile-frontend -- -s ../frontend/build -l 3000
+              
+              # Save PM2 processes (IMPORTANT)
+              pm2 save
+              
+              echo "--- Deployment Successful ---"
+              pm2 status
