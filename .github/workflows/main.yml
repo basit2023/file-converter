@@ -45,33 +45,46 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
+          debug: true
           script: |
+              set -e  # Exit script on any command failure
+              
+              echo "--- Starting Deployment ---"
+              echo "Deployment Path: ${{ secrets.DEPLOY_PATH }}"
+              
               # Ensure the deployment path exists
               mkdir -p ${{ secrets.DEPLOY_PATH }}
               cd ${{ secrets.DEPLOY_PATH }}
               
               # Check if it's already a git repository
               if [ ! -d ".git" ]; then
-                echo "Initializing project (first time setup)..."
+                echo "--- Initializing project (first time setup) ---"
                 git clone https://github.com/basit2023/file-converter.git .
               else
-                echo "Updating project..."
-                git pull origin master
+                echo "--- Updating project from master ---"
+                git fetch origin master
+                git reset --hard origin/master
               fi
               
-              # Create production .env files from secrets
+              echo "--- Updating Environment Files ---"
               echo "${{ secrets.FRONTEND_ENV }}" > frontend/.env.production
               echo "${{ secrets.BACKEND_ENV }}" > backend/.env.production
               
-              # Build and restart frontend
+              echo "--- Building Frontend ---"
               cd frontend
-              npm install
+              npm install --frozen-lockfile || npm install
               npm run build
               
-              # Build and restart backend
+              echo "--- Updating Backend ---"
               cd ../backend
-              npm install
+              npm install --frozen-lockfile || npm install
               
-              # Restart using PM2
+              echo "--- Restarting Services with PM2 ---"
+              # Restart or Start Backend
               pm2 restart movifile-backend --update-env || pm2 start server.js --name movifile-backend
+              
+              # Restart or Start Frontend
               pm2 restart movifile-frontend --update-env || pm2 start "npm start" --name movifile-frontend
+              
+              echo "--- Deployment Successful! ---"
+              pm2 status
