@@ -60,8 +60,27 @@ export function FileUploader({ initialType }: { initialType?: string }) {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Conversion failed');
+        let errorMessage = 'Conversion failed';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } else {
+            // Handle non-JSON errors (like Nginx 502/504)
+            const textError = await response.text();
+            if (textError.includes('Bad Gateway')) {
+              errorMessage = 'Server is currently unavailable (502 Bad Gateway). Please try again in a few minutes.';
+            } else if (textError.includes('Gateway Timeout')) {
+              errorMessage = 'Server took too long to respond (504 Gateway Timeout).';
+            } else {
+              errorMessage = `Server error (${response.status}). Please try again later.`;
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing error response:', e);
+        }
+        throw new Error(errorMessage);
       }
 
       const blob = await response.blob();

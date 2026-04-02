@@ -43,17 +43,22 @@ jobs:
               npm run build
               
               # =========================
+              # BACKEND SETUP
+              # =========================
+              echo "--- Installing Backend Dependencies ---"
+              cd ../backend
+              npm install
+              
+              # =========================
               # PM2 PROCESS MANAGEMENT
               # =========================
               echo "--- Restarting PM2 Services ---"
               
-              # Backend (port 5000)
-              cd ${{ secrets.DEPLOY_PATH }}/backend
-              pm2 restart movifile-backend --update-env || pm2 start server.js --name movifile-backend
+              # Restart or Start Backend
+              pm2 restart movifile-backend --update-env || pm2 start server.js --name movifile-backend --cwd ${{ secrets.DEPLOY_PATH }}/backend
               
-              # Frontend (Next.js port 3000)
-              cd ${{ secrets.DEPLOY_PATH }}/frontend
-              pm2 restart movifile-frontend --update-env || pm2 start "npm start" --name movifile-frontend
+              # Restart or Start Frontend
+              pm2 restart movifile-frontend --update-env || pm2 start "npm start" --name movifile-frontend --cwd ${{ secrets.DEPLOY_PATH }}/frontend
               
               # Save PM2 processes
               pm2 save
