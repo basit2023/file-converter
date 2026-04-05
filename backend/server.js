@@ -162,7 +162,7 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
             // PDF Conversions
             case 'pdf-to-text': {
                 const dataBuffer = fs.readFileSync(inputPath);
-                const pdfData1 = await PDFParse(dataBuffer);
+                const pdfData1 = await new PDFParse(dataBuffer);
                 outputPath = path.join(outputDir, `${outputFilename}.txt`);
                 fs.writeFileSync(outputPath, pdfData1.text);
                 responseFilename = 'converted.txt';
@@ -170,7 +170,7 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
             }
 
             case 'pdf-to-word': {
-                const pdfData2 = await PDFParse(fs.readFileSync(inputPath));
+                const pdfData2 = await new PDFParse(fs.readFileSync(inputPath));
                 
                 // Create a real .docx file using docx library
                 const doc = new Document({
