@@ -16,7 +16,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // Conversion Libraries
 const sharp = require('sharp');
-const pdfParse = require('pdf-parse');
+const { PDFParse } = require('pdf-parse');
 const mammoth = require('mammoth');
 const puppeteer = require('puppeteer');
 const { Document, Packer, Paragraph, TextRun } = require('docx');
@@ -41,7 +41,8 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Ensure directories exist
 const uploadDir = path.join(__dirname, '../uploads');
@@ -63,7 +64,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
     storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+    limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
 });
 
 // Utility to cleanup files
@@ -136,13 +137,13 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
 
             case 'gif-to-jpg':
                 outputPath = path.join(outputDir, `${outputFilename}.jpg`);
-                await sharp(inputPath).extract({ left: 0, top: 0, width: 1, height: 1 }).jpeg({ quality: 90 }).toFile(outputPath);
+                await sharp(inputPath).jpeg({ quality: 90 }).toFile(outputPath);
                 responseFilename = 'converted.jpg';
                 break;
 
             case 'gif-to-png':
                 outputPath = path.join(outputDir, `${outputFilename}.png`);
-                await sharp(inputPath).extract({ left: 0, top: 0, width: 1, height: 1 }).png().toFile(outputPath);
+                await sharp(inputPath).png().toFile(outputPath);
                 responseFilename = 'converted.png';
                 break;
 
@@ -161,7 +162,7 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
             // PDF Conversions
             case 'pdf-to-text': {
                 const dataBuffer = fs.readFileSync(inputPath);
-                const pdfData1 = await pdfParse(dataBuffer);
+                const pdfData1 = await PDFParse(dataBuffer);
                 outputPath = path.join(outputDir, `${outputFilename}.txt`);
                 fs.writeFileSync(outputPath, pdfData1.text);
                 responseFilename = 'converted.txt';
@@ -169,7 +170,7 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
             }
 
             case 'pdf-to-word': {
-                const pdfData2 = await pdfParse(fs.readFileSync(inputPath));
+                const pdfData2 = await PDFParse(fs.readFileSync(inputPath));
                 
                 // Create a real .docx file using docx library
                 const doc = new Document({

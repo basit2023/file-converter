@@ -198,7 +198,11 @@ export function FileUploader({ initialType }: { initialType?: string }) {
             </div>
             <a
               href={downloadUrl}
-              download="converted-file"
+              download={`converted-file.${
+                type.includes('to-word') ? 'docx' : 
+                type.includes('to-text') ? 'txt' : 
+                type.split('-to-')[1]
+              }`}
               className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition-all"
             >
               <Download className="h-5 w-5" />
