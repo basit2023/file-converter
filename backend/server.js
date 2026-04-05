@@ -6,12 +6,35 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
+// Prevent silent crashes — log everything
+process.on('uncaughtException', (err) => {
+    console.error('UNCAUGHT EXCEPTION:', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('UNHANDLED REJECTION at:', promise, 'reason:', reason);
+});
+
 // Conversion Libraries
 const sharp = require('sharp');
-const { PDFParse } = require('pdf-parse');
+const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 const puppeteer = require('puppeteer');
 const { Document, Packer, Paragraph, TextRun } = require('docx');
+
+// Puppeteer launch options for Linux production
+const PUPPETEER_ARGS = {
+    headless: 'new',
+    args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--disable-software-rasterizer',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+    ],
+};
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -136,26 +159,23 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
                 break;
 
             // PDF Conversions
-            case 'pdf-to-text':
+            case 'pdf-to-text': {
                 const dataBuffer = fs.readFileSync(inputPath);
-                const parserText = new PDFParse({ data: dataBuffer });
-                const data = await parserText.getText();
-                await parserText.destroy();
+                const pdfData1 = await pdfParse(dataBuffer);
                 outputPath = path.join(outputDir, `${outputFilename}.txt`);
-                fs.writeFileSync(outputPath, data.text);
+                fs.writeFileSync(outputPath, pdfData1.text);
                 responseFilename = 'converted.txt';
                 break;
+            }
 
-            case 'pdf-to-word':
-                const parserWord = new PDFParse({ data: fs.readFileSync(inputPath) });
-                const pdfData = await parserWord.getText();
-                await parserWord.destroy();
+            case 'pdf-to-word': {
+                const pdfData2 = await pdfParse(fs.readFileSync(inputPath));
                 
                 // Create a real .docx file using docx library
                 const doc = new Document({
                     sections: [{
                         properties: {},
-                        children: pdfData.text.split('\n').map(line => 
+                        children: pdfData2.text.split('\n').map(line => 
                             new Paragraph({
                                 children: [new TextRun(line)],
                             })
@@ -168,38 +188,54 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
                 fs.writeFileSync(outputPath, docBuffer);
                 responseFilename = 'converted.docx';
                 break;
+            }
 
-            case 'pdf-to-jpg':
-                const browserPdfJpg = await puppeteer.launch({ headless: 'new' });
-                const pagePdfJpg = await browserPdfJpg.newPage();
-                await pagePdfJpg.goto(`file://${inputPath}`, { waitUntil: 'networkidle2' });
-                outputPath = path.join(outputDir, `${outputFilename}.jpg`);
-                await pagePdfJpg.screenshot({ path: outputPath, type: 'jpeg' });
-                await browserPdfJpg.close();
+            case 'pdf-to-jpg': {
+                let browserPdfJpg;
+                try {
+                    browserPdfJpg = await puppeteer.launch(PUPPETEER_ARGS);
+                    const pagePdfJpg = await browserPdfJpg.newPage();
+                    await pagePdfJpg.goto(`file://${inputPath}`, { waitUntil: 'networkidle2', timeout: 30000 });
+                    outputPath = path.join(outputDir, `${outputFilename}.jpg`);
+                    await pagePdfJpg.screenshot({ path: outputPath, type: 'jpeg' });
+                } finally {
+                    if (browserPdfJpg) await browserPdfJpg.close();
+                }
                 responseFilename = 'converted.jpg';
                 break;
+            }
 
-            case 'pdf-to-png':
-                const browserPdfPng = await puppeteer.launch({ headless: 'new' });
-                const pagePdfPng = await browserPdfPng.newPage();
-                await pagePdfPng.goto(`file://${inputPath}`, { waitUntil: 'networkidle2' });
-                outputPath = path.join(outputDir, `${outputFilename}.png`);
-                await pagePdfPng.screenshot({ path: outputPath, type: 'png' });
-                await browserPdfPng.close();
+            case 'pdf-to-png': {
+                let browserPdfPng;
+                try {
+                    browserPdfPng = await puppeteer.launch(PUPPETEER_ARGS);
+                    const pagePdfPng = await browserPdfPng.newPage();
+                    await pagePdfPng.goto(`file://${inputPath}`, { waitUntil: 'networkidle2', timeout: 30000 });
+                    outputPath = path.join(outputDir, `${outputFilename}.png`);
+                    await pagePdfPng.screenshot({ path: outputPath, type: 'png' });
+                } finally {
+                    if (browserPdfPng) await browserPdfPng.close();
+                }
                 responseFilename = 'converted.png';
                 break;
+            }
 
             // Word Conversions
-            case 'word-to-pdf':
+            case 'word-to-pdf': {
                 const result = await mammoth.convertToHtml({ path: inputPath });
-                const browser = await puppeteer.launch({ headless: 'new' });
-                const page = await browser.newPage();
-                await page.setContent(result.value);
-                outputPath = path.join(outputDir, `${outputFilename}.pdf`);
-                await page.pdf({ path: outputPath, format: 'A4' });
-                await browser.close();
+                let browserWordPdf;
+                try {
+                    browserWordPdf = await puppeteer.launch(PUPPETEER_ARGS);
+                    const page = await browserWordPdf.newPage();
+                    await page.setContent(result.value, { waitUntil: 'networkidle0', timeout: 30000 });
+                    outputPath = path.join(outputDir, `${outputFilename}.pdf`);
+                    await page.pdf({ path: outputPath, format: 'A4' });
+                } finally {
+                    if (browserWordPdf) await browserWordPdf.close();
+                }
                 responseFilename = 'converted.pdf';
                 break;
+            }
 
             case 'word-to-text':
                 const wordResult = await mammoth.extractRawText({ path: inputPath });
@@ -239,9 +275,16 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
 });
 
 app.get('/health', (req, res) => {
-    res.json({ status: 'healthy' });
+    res.json({ status: 'healthy', uptime: process.uptime(), memory: process.memoryUsage() });
 });
 
-app.listen(PORT, () => {
+// Also handle /api/health for Nginx proxy setups
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'healthy', uptime: process.uptime(), memory: process.memoryUsage() });
+});
+
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
+    console.log(`NODE_ENV=${process.env.NODE_ENV}`);
+    console.log(`Process PID: ${process.pid}`);
 });

@@ -35,6 +35,16 @@ jobs:
               echo "${{ secrets.BACKEND_ENV }}" > backend/.env
               
               # =========================
+              # INSTALL PUPPETEER SYSTEM DEPENDENCIES
+              # =========================
+              echo "--- Installing System Dependencies for Chromium ---"
+              sudo apt-get update -qq
+              sudo apt-get install -y -qq libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 \
+                libxi6 libxtst6 libnss3 libcups2 libxss1 libxrandr2 libasound2 \
+                libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libgtk-3-0 \
+                libgbm1 ca-certificates fonts-liberation || true
+              
+              # =========================
               # FRONTEND SETUP
               # =========================
               echo "--- Building Frontend ---"
@@ -52,16 +62,32 @@ jobs:
               # =========================
               # PM2 PROCESS MANAGEMENT
               # =========================
+              echo "--- Cleaning up old PM2 processes ---"
+              
+              # Delete OLD duplicate 'movifile' process (was conflicting on port 5000)
+              pm2 delete movifile 2>/dev/null || true
+              
+              # Stop all movifile processes first to avoid port conflicts
+              pm2 stop movifile-backend 2>/dev/null || true
+              pm2 stop movifile-frontend 2>/dev/null || true
+              
               echo "--- Restarting PM2 Services ---"
               
-              # Restart or Start Backend
-              pm2 restart movifile-backend --update-env || pm2 start server.js --name movifile-backend --cwd ${{ secrets.DEPLOY_PATH }}/backend
+              # Delete and re-create to ensure clean state
+              pm2 delete movifile-backend 2>/dev/null || true
+              pm2 start server.js --name movifile-backend --cwd ${{ secrets.DEPLOY_PATH }}/backend
               
-              # Restart or Start Frontend
-              pm2 restart movifile-frontend --update-env || pm2 start "npm start" --name movifile-frontend --cwd ${{ secrets.DEPLOY_PATH }}/frontend
+              pm2 delete movifile-frontend 2>/dev/null || true
+              pm2 start "npm start" --name movifile-frontend --cwd ${{ secrets.DEPLOY_PATH }}/frontend
               
               # Save PM2 processes
               pm2 save
               
-              echo "--- Deployment Successful ---"
+              # Wait for backend to start and verify health
+              echo "--- Verifying Deployment ---"
+              sleep 3
               pm2 status
+              pm2 logs movifile-backend --lines 5 --nostream
+              curl -s http://localhost:5000/health || echo "WARNING: Backend health check failed!"
+              
+              echo "--- Deployment Complete ---"
