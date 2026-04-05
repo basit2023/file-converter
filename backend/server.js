@@ -162,21 +162,25 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
             // PDF Conversions
             case 'pdf-to-text': {
                 const dataBuffer = fs.readFileSync(inputPath);
-                const pdfData1 = await new PDFParse(dataBuffer);
+                const parser = new PDFParse({ data: dataBuffer });
+                const result = await parser.getText();
                 outputPath = path.join(outputDir, `${outputFilename}.txt`);
-                fs.writeFileSync(outputPath, pdfData1.text);
+                fs.writeFileSync(outputPath, result.text);
+                await parser.destroy();
                 responseFilename = 'converted.txt';
                 break;
             }
 
             case 'pdf-to-word': {
-                const pdfData2 = await new PDFParse(fs.readFileSync(inputPath));
+                const dataBuffer = fs.readFileSync(inputPath);
+                const parser = new PDFParse({ data: dataBuffer });
+                const result = await parser.getText();
                 
                 // Create a real .docx file using docx library
                 const doc = new Document({
                     sections: [{
                         properties: {},
-                        children: pdfData2.text.split('\n').map(line => 
+                        children: result.text.split('\n').map(line => 
                             new Paragraph({
                                 children: [new TextRun(line)],
                             })
@@ -187,6 +191,7 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
                 outputPath = path.join(outputDir, `${outputFilename}.docx`);
                 const docBuffer = await Packer.toBuffer(doc);
                 fs.writeFileSync(outputPath, docBuffer);
+                await parser.destroy();
                 responseFilename = 'converted.docx';
                 break;
             }
