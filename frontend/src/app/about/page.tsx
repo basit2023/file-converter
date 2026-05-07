@@ -1,6 +1,6 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Zap, ShieldCheck, Globe, Heart, Users, Award, ArrowRight } from "lucide-react";
+import { Zap, ShieldCheck, Globe, Heart, ArrowRight } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 

@@ -2,7 +2,7 @@
 
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Mail, MessageSquare, Clock, Send, MapPin } from "lucide-react";
+import { Mail, Clock, Send, MapPin } from "lucide-react";
 import { useState } from "react";
 
 export default function Contact() {

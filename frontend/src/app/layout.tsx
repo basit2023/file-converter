@@ -1,9 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -16,7 +13,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "MoviFile | Free Online File Converter — PDF, Word, JPG, PNG, WebP",
+    default: "MoviFile | Free Online File Converter - PDF, Word, JPG, PNG, WebP",
     template: "%s | MoviFile",
   },
   description: "Convert files online for free with MoviFile. Transform PDF to Word, PDF to Text, JPG to PNG, PNG to WebP, Word to PDF, and more. No registration, no downloads. Fast, secure, and private file conversion.",
@@ -47,7 +44,7 @@ export const metadata: Metadata = {
   publisher: "MoviFile",
   metadataBase: new URL("https://movifile.com"),
   alternates: {
-    canonical: "https://movifile.com",
+    canonical: "/",
   },
   openGraph: {
     type: "website",
@@ -151,7 +148,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="canonical" href="https://movifile.com" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -161,7 +157,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationLd) }}
         />
       </head>
-      <body className={inter.className} suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

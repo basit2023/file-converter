@@ -6,6 +6,28 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import { CONVERSION_TYPES, CATEGORIES } from '@/constants/tools';
 
+const ACCEPT_BY_TYPE: Record<string, string> = {
+  'jpg-to-png': '.jpg,.jpeg,image/jpeg',
+  'jpg-to-webp': '.jpg,.jpeg,image/jpeg',
+  'jpg-to-gif': '.jpg,.jpeg,image/jpeg',
+  'png-to-jpg': '.png,image/png',
+  'png-to-webp': '.png,image/png',
+  'png-to-gif': '.png,image/png',
+  'gif-to-jpg': '.gif,image/gif',
+  'gif-to-png': '.gif,image/gif',
+  'webp-to-jpg': '.webp,image/webp',
+  'webp-to-png': '.webp,image/webp',
+  'pdf-to-text': '.pdf,application/pdf',
+  'pdf-to-word': '.pdf,application/pdf',
+  'pdf-to-jpg': '.pdf,application/pdf',
+  'pdf-to-png': '.pdf,application/pdf',
+  'word-to-text': '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'word-to-html': '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'word-to-pdf': '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+};
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
+
 export function FileUploader({ initialType }: { initialType?: string }) {
   const [file, setFile] = useState<File | null>(null);
   const [type, setType] = useState(initialType || 'pdf-to-text');
@@ -20,32 +42,36 @@ export function FileUploader({ initialType }: { initialType?: string }) {
     }
   }, [initialType]);
 
+  const resetForFile = (nextFile: File) => {
+    if (nextFile.size > MAX_FILE_SIZE) {
+      setStatus('error');
+      setError('File is too large. Please upload a file smaller than 50MB.');
+      return;
+    }
+
+    setFile(nextFile);
+    setStatus('idle');
+    setError(null);
+    setDownloadUrl(null);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('File changed:', e.target.files?.[0]?.name);
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-      setStatus('idle');
-      setError(null);
-      setDownloadUrl(null);
+      resetForFile(e.target.files[0]);
     }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setFile(e.dataTransfer.files[0]);
-      setStatus('idle');
-      setError(null);
-      setDownloadUrl(null);
+      resetForFile(e.dataTransfer.files[0]);
     }
   };
 
   const handleConvert = async () => {
-    console.log('Convert clicked, file:', file?.name, 'type:', type);
     if (!file) return;
 
     setStatus('processing');
-    console.log('Status set to processing');
     setError(null);
 
     const formData = new FormData();
@@ -53,7 +79,7 @@ export function FileUploader({ initialType }: { initialType?: string }) {
     formData.append('type', type);
 
     try {
-      const backendUrl = `${process.env.NEXT_PUBLIC_API_URL || `http://${window.location.hostname}:5000/api`}/convert`;
+      const backendUrl = `${process.env.NEXT_PUBLIC_API_URL || '/api'}/convert`;
       const response = await fetch(backendUrl, {
         method: 'POST',
         body: formData,
@@ -87,30 +113,33 @@ export function FileUploader({ initialType }: { initialType?: string }) {
       const url = window.URL.createObjectURL(blob);
       setDownloadUrl(url);
       setStatus('success');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || 'Something went wrong. Please try again.');
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setStatus('error');
     }
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-8">
-      {/* Glassmorphism Card */}
+    <div className="w-full max-w-2xl mx-auto space-y-6">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl border border-white/20 dark:border-zinc-800/20 p-8 rounded-3xl shadow-2xl"
+        className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xl shadow-zinc-200/60 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/20 md:p-6"
       >
         <div className="space-y-6">
-          {/* Upload Area */}
+          <div>
+            <h2 className="text-xl font-bold text-zinc-950 dark:text-white">Start converting now</h2>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Select a file and output type. No account needed.</p>
+          </div>
+
           <div
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className={`cursor-pointer group relative border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center transition-all ${
+            className={`cursor-pointer group relative flex min-h-44 flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 text-center transition-all ${
               file 
-                ? 'border-indigo-400 bg-indigo-50/10 dark:bg-indigo-900/5' 
+                ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-950/30' 
                 : 'border-zinc-300 dark:border-zinc-700 hover:border-indigo-400 dark:hover:border-indigo-500'
             }`}
           >
@@ -118,22 +147,22 @@ export function FileUploader({ initialType }: { initialType?: string }) {
               type="file" 
               ref={fileInputRef} 
               onChange={handleFileChange} 
+              accept={ACCEPT_BY_TYPE[type]}
               className="hidden" 
             />
-            <div className="bg-indigo-600/10 dark:bg-indigo-500/10 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform">
+            <div className="mb-4 rounded-full bg-indigo-600/10 p-4 transition-transform group-hover:scale-105 dark:bg-indigo-500/10">
               {file ? <File className="h-8 w-8 text-indigo-600 dark:text-indigo-400" /> : <Upload className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />}
             </div>
-            <p className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
+            <p className="max-w-full break-words text-base font-semibold text-zinc-900 dark:text-zinc-100">
               {file ? file.name : 'Click or Drag & Drop File'}
             </p>
             <p className="text-sm text-zinc-500 mt-1">
-              Supports PDF, Word, JPG, PNG (Max 10MB)
+              Supports PDF, Word, JPG, PNG, WebP and GIF up to 50MB
             </p>
           </div>
 
-          {/* Conversion Options */}
           <div className="space-y-4">
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 block">Select Conversion Type:</label>
+            <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 block">Select conversion type</label>
             {CATEGORIES.map((category) => (
               <div key={category} className="space-y-2">
                 <h3 className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{category}</h3>
@@ -142,13 +171,13 @@ export function FileUploader({ initialType }: { initialType?: string }) {
                     <button
                       key={t.id}
                       onClick={() => setType(t.id)}
-                      className={`p-3 rounded-lg text-sm font-medium transition-all text-center ${
+                      className={`min-h-20 rounded-lg p-3 text-center text-sm font-semibold transition-all ${
                         type === t.id
-                          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-                          : 'bg-white/50 dark:bg-zinc-800/50 text-zinc-900 dark:text-zinc-100 hover:bg-indigo-50 dark:hover:bg-zinc-700/50 border border-zinc-200 dark:border-zinc-700'
+                          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
+                          : 'border border-zinc-200 bg-white text-zinc-900 hover:border-indigo-400 hover:bg-indigo-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700'
                       }`}
                     >
-                      <div className="text-lg mb-1">{t.icon}</div>
+                      <div className={`mx-auto mb-1 flex h-7 min-w-10 items-center justify-center rounded px-1 text-[9px] font-black ${type === t.id ? 'bg-white/15 text-white' : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-900 dark:text-zinc-300'}`}>{t.icon}</div>
                       <div>{t.label}</div>
                     </button>
                   ))}
@@ -157,12 +186,11 @@ export function FileUploader({ initialType }: { initialType?: string }) {
             ))}
           </div>
 
-          {/* Convert Button */}
           <div className="pt-4">
             <button
               onClick={handleConvert}
               disabled={!file || status === 'processing'}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 active:scale-[0.98] transition-all"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 font-bold text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-zinc-400"
             >
               {status === 'processing' ? (
                 <>
@@ -187,13 +215,13 @@ export function FileUploader({ initialType }: { initialType?: string }) {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/50 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4"
+            className="flex flex-col items-center justify-between gap-4 rounded-lg border border-emerald-200 bg-emerald-50 p-6 dark:border-emerald-800/50 dark:bg-emerald-900/10 md:flex-row"
           >
             <div className="flex items-center gap-3">
               <CheckCircle2 className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
               <div>
                 <h3 className="font-bold text-emerald-900 dark:text-emerald-100">Ready to download!</h3>
-                <p className="text-sm text-emerald-700 dark:text-emerald-400 italic">Your file has been converted successfully.</p>
+                <p className="text-sm text-emerald-700 dark:text-emerald-400">Your file has been converted successfully.</p>
               </div>
             </div>
             <a
@@ -203,7 +231,7 @@ export function FileUploader({ initialType }: { initialType?: string }) {
                 type.includes('to-text') ? 'txt' : 
                 type.split('-to-')[1]
               }`}
-              className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition-all"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-8 py-3 font-bold text-white shadow-lg shadow-emerald-600/20 transition-all hover:bg-emerald-700 md:w-auto"
             >
               <Download className="h-5 w-5" />
               Download
@@ -216,12 +244,12 @@ export function FileUploader({ initialType }: { initialType?: string }) {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-rose-50/50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-800/50 p-6 rounded-2xl flex items-center gap-4"
+            className="flex items-center gap-4 rounded-lg border border-rose-200 bg-rose-50 p-6 dark:border-rose-800/50 dark:bg-rose-900/10"
           >
             <AlertCircle className="h-8 w-8 text-rose-600 dark:text-rose-400" />
             <div>
               <h3 className="font-bold text-rose-900 dark:text-rose-100">Error</h3>
-              <p className="text-sm text-rose-700 dark:text-rose-400 italic">{error}</p>
+              <p className="text-sm text-rose-700 dark:text-rose-400">{error}</p>
             </div>
           </motion.div>
         )}

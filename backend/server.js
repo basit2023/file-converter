@@ -3,6 +3,7 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
@@ -21,9 +22,27 @@ const mammoth = require('mammoth');
 const puppeteer = require('puppeteer');
 const { Document, Packer, Paragraph, TextRun } = require('docx');
 
+const getBrowserExecutablePath = () => {
+    const candidates = [
+        process.env.PUPPETEER_EXECUTABLE_PATH,
+        process.env.CHROME_PATH,
+        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+        'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+        '/usr/bin/google-chrome',
+        '/usr/bin/google-chrome-stable',
+        '/usr/bin/chromium',
+        '/usr/bin/chromium-browser',
+    ].filter(Boolean);
+
+    return candidates.find((candidate) => fs.existsSync(candidate));
+};
+
 // Puppeteer launch options for Linux production
 const PUPPETEER_ARGS = {
     headless: 'new',
+    executablePath: getBrowserExecutablePath(),
     args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -45,25 +64,12 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Ensure directories exist
-const uploadDir = path.join(__dirname, '../uploads');
-const outputDir = path.join(__dirname, '../outputs');
+const uploadDir = path.join(os.tmpdir(), 'movifile-uploads');
 
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir);
-
-// Multer Storage Configuration
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + uuidv4();
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-});
 
 const upload = multer({ 
-    storage: storage,
+    storage: multer.memoryStorage(),
     limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
 });
 
@@ -91,89 +97,89 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
     }
 
     const { type } = req.body;
-    const inputPath = req.file.path;
-    const outputFilename = `${uuidv4()}`;
-    let outputPath = '';
+    const inputBuffer = req.file.buffer;
+    const inputExt = path.extname(req.file.originalname || '');
+    let inputPath = '';
+    let outputBuffer;
+    let contentType = 'application/octet-stream';
     let responseFilename = '';
 
     try {
         switch (type) {
             // Image to Image Conversions
             case 'jpg-to-png':
-                outputPath = path.join(outputDir, `${outputFilename}.png`);
-                await sharp(inputPath).png().toFile(outputPath);
+                outputBuffer = await sharp(inputBuffer).png().toBuffer();
                 responseFilename = 'converted.png';
+                contentType = 'image/png';
                 break;
 
             case 'png-to-jpg':
-                outputPath = path.join(outputDir, `${outputFilename}.jpg`);
-                await sharp(inputPath).jpeg({ quality: 90 }).toFile(outputPath);
+                outputBuffer = await sharp(inputBuffer).jpeg({ quality: 90 }).toBuffer();
                 responseFilename = 'converted.jpg';
+                contentType = 'image/jpeg';
                 break;
 
             case 'jpg-to-webp':
-                outputPath = path.join(outputDir, `${outputFilename}.webp`);
-                await sharp(inputPath).webp({ quality: 90 }).toFile(outputPath);
+                outputBuffer = await sharp(inputBuffer).webp({ quality: 90 }).toBuffer();
                 responseFilename = 'converted.webp';
+                contentType = 'image/webp';
                 break;
 
             case 'png-to-webp':
-                outputPath = path.join(outputDir, `${outputFilename}.webp`);
-                await sharp(inputPath).webp({ quality: 90 }).toFile(outputPath);
+                outputBuffer = await sharp(inputBuffer).webp({ quality: 90 }).toBuffer();
                 responseFilename = 'converted.webp';
+                contentType = 'image/webp';
                 break;
 
             case 'jpg-to-gif':
-                outputPath = path.join(outputDir, `${outputFilename}.gif`);
-                await sharp(inputPath).gif().toFile(outputPath);
+                outputBuffer = await sharp(inputBuffer).gif().toBuffer();
                 responseFilename = 'converted.gif';
+                contentType = 'image/gif';
                 break;
 
             case 'png-to-gif':
-                outputPath = path.join(outputDir, `${outputFilename}.gif`);
-                await sharp(inputPath).gif().toFile(outputPath);
+                outputBuffer = await sharp(inputBuffer).gif().toBuffer();
                 responseFilename = 'converted.gif';
+                contentType = 'image/gif';
                 break;
 
             case 'gif-to-jpg':
-                outputPath = path.join(outputDir, `${outputFilename}.jpg`);
-                await sharp(inputPath).jpeg({ quality: 90 }).toFile(outputPath);
+                outputBuffer = await sharp(inputBuffer).jpeg({ quality: 90 }).toBuffer();
                 responseFilename = 'converted.jpg';
+                contentType = 'image/jpeg';
                 break;
 
             case 'gif-to-png':
-                outputPath = path.join(outputDir, `${outputFilename}.png`);
-                await sharp(inputPath).png().toFile(outputPath);
+                outputBuffer = await sharp(inputBuffer).png().toBuffer();
                 responseFilename = 'converted.png';
+                contentType = 'image/png';
                 break;
 
             case 'webp-to-jpg':
-                outputPath = path.join(outputDir, `${outputFilename}.jpg`);
-                await sharp(inputPath).jpeg({ quality: 90 }).toFile(outputPath);
+                outputBuffer = await sharp(inputBuffer).jpeg({ quality: 90 }).toBuffer();
                 responseFilename = 'converted.jpg';
+                contentType = 'image/jpeg';
                 break;
 
             case 'webp-to-png':
-                outputPath = path.join(outputDir, `${outputFilename}.png`);
-                await sharp(inputPath).png().toFile(outputPath);
+                outputBuffer = await sharp(inputBuffer).png().toBuffer();
                 responseFilename = 'converted.png';
+                contentType = 'image/png';
                 break;
 
             // PDF Conversions
             case 'pdf-to-text': {
-                const dataBuffer = fs.readFileSync(inputPath);
-                const parser = new PDFParse({ data: dataBuffer });
+                const parser = new PDFParse({ data: inputBuffer });
                 const result = await parser.getText();
-                outputPath = path.join(outputDir, `${outputFilename}.txt`);
-                fs.writeFileSync(outputPath, result.text);
+                outputBuffer = Buffer.from(result.text, 'utf8');
                 await parser.destroy();
                 responseFilename = 'converted.txt';
+                contentType = 'text/plain; charset=utf-8';
                 break;
             }
 
             case 'pdf-to-word': {
-                const dataBuffer = fs.readFileSync(inputPath);
-                const parser = new PDFParse({ data: dataBuffer });
+                const parser = new PDFParse({ data: inputBuffer });
                 const result = await parser.getText();
                 
                 // Create a real .docx file using docx library
@@ -188,90 +194,86 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
                     }],
                 });
 
-                outputPath = path.join(outputDir, `${outputFilename}.docx`);
-                const docBuffer = await Packer.toBuffer(doc);
-                fs.writeFileSync(outputPath, docBuffer);
+                outputBuffer = await Packer.toBuffer(doc);
                 await parser.destroy();
                 responseFilename = 'converted.docx';
+                contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
                 break;
             }
 
             case 'pdf-to-jpg': {
                 let browserPdfJpg;
                 try {
+                    inputPath = path.join(uploadDir, `${uuidv4()}${inputExt || '.pdf'}`);
+                    fs.writeFileSync(inputPath, inputBuffer);
                     browserPdfJpg = await puppeteer.launch(PUPPETEER_ARGS);
                     const pagePdfJpg = await browserPdfJpg.newPage();
                     await pagePdfJpg.goto(`file://${inputPath}`, { waitUntil: 'networkidle2', timeout: 30000 });
-                    outputPath = path.join(outputDir, `${outputFilename}.jpg`);
-                    await pagePdfJpg.screenshot({ path: outputPath, type: 'jpeg' });
+                    outputBuffer = await pagePdfJpg.screenshot({ type: 'jpeg' });
                 } finally {
                     if (browserPdfJpg) await browserPdfJpg.close();
                 }
                 responseFilename = 'converted.jpg';
+                contentType = 'image/jpeg';
                 break;
             }
 
             case 'pdf-to-png': {
                 let browserPdfPng;
                 try {
+                    inputPath = path.join(uploadDir, `${uuidv4()}${inputExt || '.pdf'}`);
+                    fs.writeFileSync(inputPath, inputBuffer);
                     browserPdfPng = await puppeteer.launch(PUPPETEER_ARGS);
                     const pagePdfPng = await browserPdfPng.newPage();
                     await pagePdfPng.goto(`file://${inputPath}`, { waitUntil: 'networkidle2', timeout: 30000 });
-                    outputPath = path.join(outputDir, `${outputFilename}.png`);
-                    await pagePdfPng.screenshot({ path: outputPath, type: 'png' });
+                    outputBuffer = await pagePdfPng.screenshot({ type: 'png' });
                 } finally {
                     if (browserPdfPng) await browserPdfPng.close();
                 }
                 responseFilename = 'converted.png';
+                contentType = 'image/png';
                 break;
             }
 
             // Word Conversions
             case 'word-to-pdf': {
-                const result = await mammoth.convertToHtml({ path: inputPath });
+                const result = await mammoth.convertToHtml({ buffer: inputBuffer });
                 let browserWordPdf;
                 try {
                     browserWordPdf = await puppeteer.launch(PUPPETEER_ARGS);
                     const page = await browserWordPdf.newPage();
                     await page.setContent(result.value, { waitUntil: 'networkidle0', timeout: 30000 });
-                    outputPath = path.join(outputDir, `${outputFilename}.pdf`);
-                    await page.pdf({ path: outputPath, format: 'A4' });
+                    outputBuffer = await page.pdf({ format: 'A4' });
                 } finally {
                     if (browserWordPdf) await browserWordPdf.close();
                 }
                 responseFilename = 'converted.pdf';
+                contentType = 'application/pdf';
                 break;
             }
 
             case 'word-to-text':
-                const wordResult = await mammoth.extractRawText({ path: inputPath });
-                outputPath = path.join(outputDir, `${outputFilename}.txt`);
-                fs.writeFileSync(outputPath, wordResult.value);
+                const wordResult = await mammoth.extractRawText({ buffer: inputBuffer });
+                outputBuffer = Buffer.from(wordResult.value, 'utf8');
                 responseFilename = 'converted.txt';
+                contentType = 'text/plain; charset=utf-8';
                 break;
 
             case 'word-to-html':
-                const htmlResult = await mammoth.convertToHtml({ path: inputPath });
-                outputPath = path.join(outputDir, `${outputFilename}.html`);
-                fs.writeFileSync(outputPath, htmlResult.value);
+                const htmlResult = await mammoth.convertToHtml({ buffer: inputBuffer });
+                outputBuffer = Buffer.from(htmlResult.value, 'utf8');
                 responseFilename = 'converted.html';
+                contentType = 'text/html; charset=utf-8';
                 break;
 
             default:
                 throw new Error('Unsupported conversion type.');
         }
 
-        // Send file and then cleanup
-        res.download(outputPath, responseFilename, (err) => {
-            if (err) {
-                console.error('Download error:', err);
-                if (!res.headersSent) {
-                    res.status(500).json({ error: 'Failed to download file.' });
-                }
-            }
-            // Cleanup input and output files
-            cleanup([inputPath, outputPath]);
-        });
+        cleanup([inputPath]);
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Disposition', `attachment; filename="${responseFilename}"`);
+        res.send(outputBuffer);
 
     } catch (error) {
         console.error('Conversion error:', error);
