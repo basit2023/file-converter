@@ -3,6 +3,7 @@ import { Footer } from "@/components/Footer";
 import { FileUploader } from "@/components/FileUploader";
 import { ArrowRight, CheckCircle2, FileCode, FileText, Globe, Image, Lock, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { CONVERSION_TYPES, CATEGORIES } from "@/constants/tools";
+import { BLOG_POSTS } from "@/constants/blogs";
 import Link from "next/link";
 
 export default function Home() {
@@ -170,6 +171,36 @@ export default function Home() {
                 </ul>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="border-t border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <div className="container mx-auto max-w-5xl space-y-8 px-4 py-14">
+            <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+              <div className="max-w-2xl space-y-3">
+                <h2 className="text-3xl font-bold tracking-tight text-zinc-950 dark:text-white">File Conversion Guides</h2>
+                <p className="text-zinc-600 dark:text-zinc-400">
+                  Helpful, practical articles for cleaner PDF, Word and image conversions.
+                </p>
+              </div>
+              <Link href="/blog" className="text-sm font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
+                View all guides
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              {BLOG_POSTS.slice(0, 3).map((post) => (
+                <article key={post.slug} className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+                  <div className="mb-3 text-xs font-bold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">{post.category}</div>
+                  <h3 className="text-lg font-bold leading-snug text-zinc-950 dark:text-white">
+                    <Link href={`/blog/${post.slug}`} className="hover:text-indigo-600 dark:hover:text-indigo-400">
+                      {post.title}
+                    </Link>
+                  </h3>
+                  <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{post.description}</p>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
       </main>

@@ -11,10 +11,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const tool = CONVERSION_TYPES.find(t => t.slug === slug);
   if (!tool) return { title: "Tool Not Found" };
+  const title = `Free ${tool.label} Converter Online`;
+  const description = `${tool.description} Convert ${tool.label.replace(' to ', ' files to ')} online for free with MoviFile. No registration, no downloads. Fast, secure, and private.`;
   
   return {
-    title: `Free ${tool.label} Converter Online | MoviFile`,
-    description: `${tool.description} Convert ${tool.label.replace(' to ', ' files to ')} online for free with MoviFile. No registration, no downloads. Fast, secure, and private.`,
+    title,
+    description,
     keywords: [
       tool.label.toLowerCase(),
       `${tool.label.toLowerCase()} converter`,
@@ -29,11 +31,30 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       canonical: `https://movifile.com/tools/${slug}`,
     },
     openGraph: {
-      title: `Free ${tool.label} Converter | MoviFile`,
-      description: tool.description,
+      title,
+      description,
       url: `https://movifile.com/tools/${slug}`,
       siteName: 'MoviFile',
       type: 'website',
+      images: [
+        {
+          url: '/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: `MoviFile ${tool.label} converter`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [
+        {
+          url: '/og-image.png',
+          alt: `MoviFile ${tool.label} converter`,
+        },
+      ],
     },
   };
 }
@@ -81,6 +102,31 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
     }))
   } : null;
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://movifile.com"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": `${tool.category} Tools`,
+        "item": "https://movifile.com/#tools"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": tool.label,
+        "item": `https://movifile.com/tools/${tool.slug}`
+      }
+    ]
+  };
+
   return (
     <div className="min-h-screen flex flex-col relative">
       <Header />
@@ -96,6 +142,10 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
           dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
         />
       )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       
       <main className="grow container mx-auto px-4 py-10 space-y-14">
         {/* Breadcrumbs */}

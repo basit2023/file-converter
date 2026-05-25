@@ -12,6 +12,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  applicationName: "MoviFile",
+  referrer: "origin-when-cross-origin",
   title: {
     default: "MoviFile | Free Online File Converter - PDF, Word, JPG, PNG, WebP",
     template: "%s | MoviFile",
@@ -43,8 +45,17 @@ export const metadata: Metadata = {
   creator: "MoviFile",
   publisher: "MoviFile",
   metadataBase: new URL("https://movifile.com"),
+  manifest: "/site.webmanifest",
   alternates: {
     canonical: "/",
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   openGraph: {
     type: "website",
@@ -66,7 +77,12 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MoviFile | Free Online File Converter",
     description: "Convert PDF, Word, JPG, PNG, WebP, and GIF files online for free. Fast, secure, and private.",
-    images: ["/og-image.png"],
+    images: [
+      {
+        url: "/og-image.png",
+        alt: "MoviFile free online file converter",
+      },
+    ],
   },
   robots: {
     index: true,
@@ -79,6 +95,11 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
   verification: {
     // Add your Google Search Console verification code here
     // google: 'your-google-verification-code',
@@ -89,8 +110,9 @@ export const metadata: Metadata = {
 // JSON-LD Structured Data
 const jsonLd = {
   "@context": "https://schema.org",
-  "@type": "WebApplication",
+  "@type": ["WebApplication", "SoftwareApplication"],
   "name": "MoviFile",
+  "alternateName": "MoviFile Converter",
   "url": "https://movifile.com",
   "description": "Free online file converter for PDF, Word, JPG, PNG, WebP, and GIF. No registration required.",
   "applicationCategory": "UtilitiesApplication",
@@ -105,6 +127,7 @@ const jsonLd = {
     "name": "MoviFile",
     "url": "https://movifile.com"
   },
+  "image": "https://movifile.com/og-image.png",
   "featureList": [
     "PDF to Word Conversion",
     "PDF to Text Extraction",
@@ -126,12 +149,26 @@ const jsonLd = {
   ]
 };
 
+const websiteLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "MoviFile",
+  "url": "https://movifile.com",
+  "description": "Free online file converter for PDF, Word and image files.",
+  "publisher": {
+    "@type": "Organization",
+    "name": "MoviFile"
+  },
+  "inLanguage": "en-US"
+};
+
 const organizationLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "MoviFile",
   "url": "https://movifile.com",
-  "logo": "https://movifile.com/favicon.ico",
+  "logo": "https://movifile.com/og-image.png",
+  "image": "https://movifile.com/og-image.png",
   "contactPoint": {
     "@type": "ContactPoint",
     "email": "support@movifile.com",
@@ -151,6 +188,10 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }}
         />
         <script
           type="application/ld+json"

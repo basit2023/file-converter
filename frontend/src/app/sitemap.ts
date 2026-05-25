@@ -1,9 +1,10 @@
 import { MetadataRoute } from 'next';
 import { CONVERSION_TYPES } from '@/constants/tools';
+import { BLOG_POSTS } from '@/constants/blogs';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://movifile.com';
-  const lastModified = new Date('2026-05-08');
+  const lastModified = new Date('2026-05-26');
   
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
@@ -24,6 +25,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified,
       changeFrequency: 'monthly',
       priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/blog`,
+      lastModified,
+      changeFrequency: 'weekly',
+      priority: 0.8,
     },
     {
       url: `${baseUrl}/privacy-policy`,
@@ -53,5 +60,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.9,
   }));
 
-  return [...staticPages, ...toolPages];
+  const blogPages: MetadataRoute.Sitemap = BLOG_POSTS.map((post) => ({
+    url: `${baseUrl}/blog/${post.slug}`,
+    lastModified: new Date(post.date),
+    changeFrequency: 'monthly' as const,
+    priority: 0.75,
+  }));
+
+  return [...staticPages, ...toolPages, ...blogPages];
 }
