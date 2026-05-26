@@ -14,115 +14,103 @@ jobs:
     environment: production
     steps:
       - name: Deploy to VPS
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.VPS_IP }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT || '22' }}
-          script: |
-              set -e
-              
-              echo "--- Starting Deployment ---"
-              DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
-              FRONTEND_PORT="${{ secrets.FRONTEND_PORT }}"
-              BACKEND_PORT="${{ secrets.BACKEND_PORT }}"
-              FRONTEND_PORT="${FRONTEND_PORT:-3000}"
-              BACKEND_PORT="${BACKEND_PORT:-5000}"
+        env:
+          VPS_IP: ${{ secrets.VPS_IP }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          FRONTEND_PORT: ${{ secrets.FRONTEND_PORT || '3000' }}
+          BACKEND_PORT: ${{ secrets.BACKEND_PORT || '5000' }}
+          FRONTEND_ENV: ${{ secrets.FRONTEND_ENV }}
+          BACKEND_ENV: ${{ secrets.BACKEND_ENV }}
+        run: |
+          set -euo pipefail
 
-              if [ -z "$DEPLOY_PATH" ] || [ "$DEPLOY_PATH" = "/" ] || [ "$DEPLOY_PATH" = "/var/www" ] || [ "$DEPLOY_PATH" = "/home" ]; then
-                echo "ERROR: DEPLOY_PATH is missing or points to a shared system folder: $DEPLOY_PATH"
-                exit 1
-              fi
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/movifile_deploy_key
+          chmod 600 ~/.ssh/movifile_deploy_key
 
-              case "$DEPLOY_PATH" in
-                *movifile*|*file-converter*|*converterfile*) ;;
-                *)
-                  echo "ERROR: DEPLOY_PATH must be a dedicated MoviFile folder, not a parent folder used by other websites."
-                  echo "Current DEPLOY_PATH: $DEPLOY_PATH"
-                  exit 1
-                  ;;
-              esac
+          FRONTEND_ENV_B64="$(printf '%s' "$FRONTEND_ENV" | base64 -w0)"
+          BACKEND_ENV_B64="$(printf '%s' "$BACKEND_ENV" | base64 -w0)"
 
-              mkdir -p "$DEPLOY_PATH"
-              cd "$DEPLOY_PATH"
-              
-              # Pull latest code
-              if [ ! -d ".git" ]; then
-                git clone https://github.com/basit2023/file-converter.git .
-              else
-                git fetch origin main
-                git reset --hard origin/main
-              fi
-              
-              echo "--- Environment Setup ---"
-              echo "${{ secrets.FRONTEND_ENV }}" > frontend/.env.production
-              
-              # Write backend .env with REAL newlines (fix for literal \n in GitHub secrets)
-              printf '%b\n' "${{ secrets.BACKEND_ENV }}" > backend/.env
-              
-              # Verify .env has PORT on its own line — if not, recreate it
-              if ! grep -q "^PORT=" backend/.env; then
-                printf "PORT=%s\nNODE_ENV=production\n" "$BACKEND_PORT" > backend/.env
-              else
-                sed -i "s/^PORT=.*/PORT=$BACKEND_PORT/" backend/.env
-              fi
-              
-              # =========================
-              # INSTALL PUPPETEER SYSTEM DEPENDENCIES
-              # =========================
-              echo "--- Installing System Dependencies for Chromium ---"
-              sudo apt-get update -qq
-              sudo apt-get install -y -qq libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 \
-                libxi6 libxtst6 libnss3 libcups2 libxss1 libxrandr2 libasound2 \
-                libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libgtk-3-0 \
-                libgbm1 ca-certificates fonts-liberation libreoffice || true
-              
-              # =========================
-              # FRONTEND SETUP
-              # =========================
-              echo "--- Building Frontend ---"
-              cd frontend
-              npm ci
-              npm run build
-              
-              # =========================
-              # BACKEND SETUP
-              # =========================
-              echo "--- Installing Backend Dependencies ---"
-              cd ../backend
-              npm ci
-              
-              # =========================
-              # PM2 PROCESS MANAGEMENT
-              # =========================
-              echo "--- Cleaning up old PM2 processes ---"
-              
-              # Delete OLD duplicate 'movifile' process (was conflicting on port 5000)
-              pm2 delete movifile 2>/dev/null || true
-              
-              # Stop all movifile processes first to avoid port conflicts
-              pm2 stop movifile-backend 2>/dev/null || true
-              pm2 stop movifile-frontend 2>/dev/null || true
-              
-              echo "--- Restarting PM2 Services ---"
-              
-              # Delete and re-create to ensure clean state
-              pm2 delete movifile-backend 2>/dev/null || true
-              pm2 start server.js --name movifile-backend --cwd "$DEPLOY_PATH/backend" --update-env
-              
-              pm2 delete movifile-frontend 2>/dev/null || true
-              PORT="$FRONTEND_PORT" pm2 start npm --name movifile-frontend --cwd "$DEPLOY_PATH/frontend" -- start -- -p "$FRONTEND_PORT"
-              
-              # Save PM2 processes
-              pm2 save
-              
-              # Wait for backend to start and verify health
-              echo "--- Verifying Deployment ---"
-              sleep 3
-              pm2 status
-              pm2 logs movifile-backend --lines 5 --nostream
-              curl -fsS "http://localhost:$BACKEND_PORT/health"
-              curl -fsS "http://localhost:$FRONTEND_PORT" >/dev/null
-              
-              echo "--- Deployment Complete ---"
+          ssh -i ~/.ssh/movifile_deploy_key \
+            -p "$VPS_PORT" \
+            -o StrictHostKeyChecking=accept-new \
+            -o ServerAliveInterval=30 \
+            "$VPS_USER@$VPS_IP" \
+            "DEPLOY_PATH='$DEPLOY_PATH' FRONTEND_PORT='$FRONTEND_PORT' BACKEND_PORT='$BACKEND_PORT' FRONTEND_ENV_B64='$FRONTEND_ENV_B64' BACKEND_ENV_B64='$BACKEND_ENV_B64' bash -s" <<'REMOTE'
+          set -e
+
+          echo "--- Starting Deployment ---"
+
+          if [ -z "$DEPLOY_PATH" ] || [ "$DEPLOY_PATH" = "/" ] || [ "$DEPLOY_PATH" = "/var/www" ] || [ "$DEPLOY_PATH" = "/home" ]; then
+            echo "ERROR: DEPLOY_PATH is missing or points to a shared system folder: $DEPLOY_PATH"
+            exit 1
+          fi
+
+          case "$DEPLOY_PATH" in
+            *movifile*|*file-converter*|*converterfile*) ;;
+            *)
+              echo "ERROR: DEPLOY_PATH must be a dedicated MoviFile folder, not a parent folder used by other websites."
+              echo "Current DEPLOY_PATH: $DEPLOY_PATH"
+              exit 1
+              ;;
+          esac
+
+          mkdir -p "$DEPLOY_PATH"
+          cd "$DEPLOY_PATH"
+
+          if [ ! -d ".git" ]; then
+            git clone https://github.com/basit2023/file-converter.git .
+          else
+            git fetch origin main
+            git reset --hard origin/main
+          fi
+
+          echo "--- Environment Setup ---"
+          printf '%s' "$FRONTEND_ENV_B64" | base64 -d > frontend/.env.production
+          printf '%s' "$BACKEND_ENV_B64" | base64 -d > backend/.env
+
+          if ! grep -q "^PORT=" backend/.env; then
+            printf "PORT=%s\nNODE_ENV=production\n" "$BACKEND_PORT" > backend/.env
+          else
+            sed -i "s/^PORT=.*/PORT=$BACKEND_PORT/" backend/.env
+          fi
+
+          echo "--- Installing System Dependencies for Chromium and LibreOffice ---"
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 \
+            libxi6 libxtst6 libnss3 libcups2 libxss1 libxrandr2 libasound2 \
+            libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libgtk-3-0 \
+            libgbm1 ca-certificates fonts-liberation libreoffice || true
+
+          echo "--- Building Frontend ---"
+          cd frontend
+          npm ci
+          npm run build
+
+          echo "--- Installing Backend Dependencies ---"
+          cd ../backend
+          npm ci
+
+          echo "--- Restarting PM2 Services ---"
+          pm2 delete movifile 2>/dev/null || true
+          pm2 delete movifile-backend 2>/dev/null || true
+          pm2 start server.js --name movifile-backend --cwd "$DEPLOY_PATH/backend" --update-env
+
+          pm2 delete movifile-frontend 2>/dev/null || true
+          PORT="$FRONTEND_PORT" pm2 start npm --name movifile-frontend --cwd "$DEPLOY_PATH/frontend" -- start -- -p "$FRONTEND_PORT"
+
+          pm2 save
+
+          echo "--- Verifying Deployment ---"
+          sleep 3
+          pm2 status
+          pm2 logs movifile-backend --lines 5 --nostream
+          curl -fsS "http://localhost:$BACKEND_PORT/health"
+          curl -fsS "http://localhost:$FRONTEND_PORT" >/dev/null
+
+          echo "--- Deployment Complete ---"
+          REMOTE
