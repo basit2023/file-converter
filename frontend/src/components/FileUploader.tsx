@@ -21,9 +21,9 @@ const ACCEPT_BY_TYPE: Record<string, string> = {
   'pdf-to-word': '.pdf,application/pdf',
   'pdf-to-jpg': '.pdf,application/pdf',
   'pdf-to-png': '.pdf,application/pdf',
-  'word-to-text': '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'word-to-html': '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'word-to-pdf': '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'word-to-text': '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'word-to-html': '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'word-to-pdf': '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 };
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024;

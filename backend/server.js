@@ -21,7 +21,6 @@ const sharp = require('sharp');
 const { PDFParse } = require('pdf-parse');
 const mammoth = require('mammoth');
 const puppeteer = require('puppeteer');
-const { Document, Packer, Paragraph, TextRun } = require('docx');
 
 const getBrowserExecutablePath = () => {
     const candidates = [
@@ -95,9 +94,28 @@ const execFileAsync = (file, args, options = {}) => new Promise((resolve, reject
     });
 });
 
-const convertWithLibreOffice = async (inputBuffer, inputExtension, outputExtension) => {
+const OFFICE_FILTERS = {
+    docx: 'docx:"Office Open XML Text"',
+    pdf: 'pdf:writer_pdf_Export',
+};
+
+const findConvertedFile = async (directory, basename, outputExtension) => {
+    const files = await fs.promises.readdir(directory);
+    const wantedExtension = `.${outputExtension.toLowerCase()}`;
+
+    return files.find((file) => {
+        const parsed = path.parse(file);
+        return parsed.name === basename && parsed.ext.toLowerCase() === wantedExtension;
+    });
+};
+
+const convertWithLibreOffice = async (inputBuffer, inputExtension, outputExtension, options = {}) => {
+    const { required = false } = options;
     const sofficePath = getLibreOfficeExecutablePath();
     if (!sofficePath) {
+        if (required) {
+            throw new Error('LibreOffice is required to preserve formatting for this conversion, but it is not installed on the server.');
+        }
         return null;
     }
 
@@ -114,6 +132,8 @@ const convertWithLibreOffice = async (inputBuffer, inputExtension, outputExtensi
         await fs.promises.mkdir(userProfileDir, { recursive: true });
 
         const userInstallation = `-env:UserInstallation=file:///${userProfileDir.replace(/\\/g, '/')}`;
+        const convertTarget = OFFICE_FILTERS[outputExtension] || outputExtension;
+
         await execFileAsync(sofficePath, [
             '--headless',
             '--nologo',
@@ -122,18 +142,18 @@ const convertWithLibreOffice = async (inputBuffer, inputExtension, outputExtensi
             '--nolockcheck',
             userInstallation,
             '--convert-to',
-            outputExtension,
+            convertTarget,
             '--outdir',
             jobDir,
             inputPathForOffice,
         ]);
 
-        const expectedOutputPath = path.join(jobDir, `source.${outputExtension}`);
-        if (!fs.existsSync(expectedOutputPath)) {
+        const convertedFile = await findConvertedFile(jobDir, 'source', outputExtension);
+        if (!convertedFile) {
             throw new Error(`LibreOffice did not produce a ${outputExtension} file.`);
         }
 
-        return await fs.promises.readFile(expectedOutputPath);
+        return await fs.promises.readFile(path.join(jobDir, convertedFile));
     } finally {
         fs.promises.rm(jobDir, { recursive: true, force: true }).catch((err) => {
             console.error(`Error deleting LibreOffice temp directory ${jobDir}:`, err.message);
@@ -252,35 +272,7 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
             }
 
             case 'pdf-to-word': {
-                outputBuffer = await convertWithLibreOffice(inputBuffer, inputExt || '.pdf', 'docx');
-
-                if (!outputBuffer) {
-                    const parser = new PDFParse({ data: inputBuffer });
-                    const result = await parser.getText();
-
-                    const paragraphs = result.text
-                        .split(/\n{2,}/)
-                        .map(block => block.replace(/\n/g, ' ').trim())
-                        .filter(Boolean)
-                        .map(block => new Paragraph({
-                            spacing: { after: 160 },
-                            children: [new TextRun(block)],
-                        }));
-
-                    const doc = new Document({
-                        sections: [{
-                            properties: {},
-                            children: paragraphs.length > 0 ? paragraphs : [
-                                new Paragraph({
-                                    children: [new TextRun('No selectable text was found in this PDF.')],
-                                }),
-                            ],
-                        }],
-                    });
-
-                    outputBuffer = await Packer.toBuffer(doc);
-                    await parser.destroy();
-                }
+                outputBuffer = await convertWithLibreOffice(inputBuffer, inputExt || '.pdf', 'docx', { required: true });
                 responseFilename = 'converted.docx';
                 contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
                 break;
@@ -322,34 +314,7 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
 
             // Word Conversions
             case 'word-to-pdf': {
-                outputBuffer = await convertWithLibreOffice(inputBuffer, inputExt || '.docx', 'pdf');
-
-                if (!outputBuffer) {
-                    const result = await mammoth.convertToHtml({ buffer: inputBuffer });
-                    let browserWordPdf;
-                    try {
-                        browserWordPdf = await puppeteer.launch(PUPPETEER_ARGS);
-                        const page = await browserWordPdf.newPage();
-                        await page.setContent(`
-                            <!doctype html>
-                            <html>
-                              <head>
-                                <meta charset="utf-8">
-                                <style>
-                                  body { font-family: Arial, sans-serif; line-height: 1.45; color: #111827; }
-                                  img { max-width: 100%; }
-                                  table { border-collapse: collapse; width: 100%; }
-                                  td, th { border: 1px solid #d4d4d8; padding: 6px; }
-                                </style>
-                              </head>
-                              <body>${result.value}</body>
-                            </html>
-                        `, { waitUntil: 'networkidle0', timeout: 30000 });
-                        outputBuffer = await page.pdf({ format: 'A4', printBackground: true });
-                    } finally {
-                        if (browserWordPdf) await browserWordPdf.close();
-                    }
-                }
+                outputBuffer = await convertWithLibreOffice(inputBuffer, inputExt || '.docx', 'pdf', { required: true });
                 responseFilename = 'converted.pdf';
                 contentType = 'application/pdf';
                 break;
@@ -398,4 +363,5 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`NODE_ENV=${process.env.NODE_ENV}`);
     console.log(`Process PID: ${process.pid}`);
+    console.log(`LibreOffice path: ${getLibreOfficeExecutablePath() || 'not found'}`);
 });

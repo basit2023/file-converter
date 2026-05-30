@@ -81,10 +81,22 @@ jobs:
 
           echo "--- Installing System Dependencies for Chromium and LibreOffice ---"
           sudo apt-get update -qq
+
+          sudo apt-get install -y -qq libreoffice libreoffice-writer libreoffice-draw \
+            fonts-liberation fonts-dejavu fonts-noto fonts-crosextra-carlito fonts-crosextra-caladea
+
+          if apt-cache show libasound2 >/dev/null 2>&1; then
+            ALSA_PACKAGE=libasound2
+          else
+            ALSA_PACKAGE=libasound2t64
+          fi
+
           sudo apt-get install -y -qq libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 \
-            libxi6 libxtst6 libnss3 libcups2 libxss1 libxrandr2 libasound2 \
+            libxi6 libxtst6 libnss3 libcups2 libxss1 libxrandr2 \
             libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libgtk-3-0 \
-            libgbm1 ca-certificates fonts-liberation libreoffice || true
+            libgbm1 ca-certificates "$ALSA_PACKAGE"
+
+          command -v libreoffice >/dev/null || command -v soffice >/dev/null
 
           echo "--- Building Frontend ---"
           cd frontend
