@@ -24,6 +24,9 @@ jobs:
           BACKEND_PORT: ${{ secrets.BACKEND_PORT || '5000' }}
           FRONTEND_ENV: ${{ secrets.FRONTEND_ENV }}
           BACKEND_ENV: ${{ secrets.BACKEND_ENV }}
+          ADOBE_PDF_CLIENT_ID: ${{ secrets.ADOBE_PDF_CLIENT_ID }}
+          ADOBE_PDF_CLIENT_SECRET: ${{ secrets.ADOBE_PDF_CLIENT_SECRET }}
+          ADOBE_ORGANIZATION_ID: ${{ secrets.ADOBE_ORGANIZATION_ID }}
         run: |
           set -euo pipefail
 
@@ -34,13 +37,16 @@ jobs:
 
           FRONTEND_ENV_B64="$(printf '%s' "$FRONTEND_ENV" | base64 -w0)"
           BACKEND_ENV_B64="$(printf '%s' "$BACKEND_ENV" | base64 -w0)"
+          ADOBE_PDF_CLIENT_ID_B64="$(printf '%s' "$ADOBE_PDF_CLIENT_ID" | base64 -w0)"
+          ADOBE_PDF_CLIENT_SECRET_B64="$(printf '%s' "$ADOBE_PDF_CLIENT_SECRET" | base64 -w0)"
+          ADOBE_ORGANIZATION_ID_B64="$(printf '%s' "$ADOBE_ORGANIZATION_ID" | base64 -w0)"
 
           ssh -i ~/.ssh/movifile_deploy_key \
             -p "$VPS_PORT" \
             -o StrictHostKeyChecking=accept-new \
             -o ServerAliveInterval=30 \
             "$VPS_USER@$VPS_IP" \
-            "DEPLOY_PATH='$DEPLOY_PATH' FRONTEND_PORT='$FRONTEND_PORT' BACKEND_PORT='$BACKEND_PORT' FRONTEND_ENV_B64='$FRONTEND_ENV_B64' BACKEND_ENV_B64='$BACKEND_ENV_B64' bash -s" <<'REMOTE'
+            "DEPLOY_PATH='$DEPLOY_PATH' FRONTEND_PORT='$FRONTEND_PORT' BACKEND_PORT='$BACKEND_PORT' FRONTEND_ENV_B64='$FRONTEND_ENV_B64' BACKEND_ENV_B64='$BACKEND_ENV_B64' ADOBE_PDF_CLIENT_ID_B64='$ADOBE_PDF_CLIENT_ID_B64' ADOBE_PDF_CLIENT_SECRET_B64='$ADOBE_PDF_CLIENT_SECRET_B64' ADOBE_ORGANIZATION_ID_B64='$ADOBE_ORGANIZATION_ID_B64' bash -s" <<'REMOTE'
           set -e
 
           echo "--- Starting Deployment ---"
@@ -73,10 +79,38 @@ jobs:
           printf '%s' "$FRONTEND_ENV_B64" | base64 -d > frontend/.env.production
           printf '%s' "$BACKEND_ENV_B64" | base64 -d > backend/.env
 
-          if ! grep -q "^PORT=" backend/.env; then
-            printf "PORT=%s\nNODE_ENV=production\n" "$BACKEND_PORT" > backend/.env
-          else
-            sed -i "s/^PORT=.*/PORT=$BACKEND_PORT/" backend/.env
+          set_backend_env() {
+            key="$1"
+            value="$2"
+
+            if grep -q "^${key}=" backend/.env; then
+              awk -v key="$key" -v value="$value" '
+                $0 ~ "^" key "=" { print key "=" value; next }
+                { print }
+              ' backend/.env > backend/.env.tmp
+              mv backend/.env.tmp backend/.env
+            else
+              printf "%s=%s\n" "$key" "$value" >> backend/.env
+            fi
+          }
+
+          set_backend_env "PORT" "$BACKEND_PORT"
+          set_backend_env "NODE_ENV" "production"
+
+          ADOBE_PDF_CLIENT_ID="$(printf '%s' "$ADOBE_PDF_CLIENT_ID_B64" | base64 -d)"
+          ADOBE_PDF_CLIENT_SECRET="$(printf '%s' "$ADOBE_PDF_CLIENT_SECRET_B64" | base64 -d)"
+          ADOBE_ORGANIZATION_ID="$(printf '%s' "$ADOBE_ORGANIZATION_ID_B64" | base64 -d)"
+
+          if [ -n "$ADOBE_PDF_CLIENT_ID" ]; then
+            set_backend_env "PDF_SERVICES_CLIENT_ID" "$ADOBE_PDF_CLIENT_ID"
+          fi
+
+          if [ -n "$ADOBE_PDF_CLIENT_SECRET" ]; then
+            set_backend_env "PDF_SERVICES_CLIENT_SECRET" "$ADOBE_PDF_CLIENT_SECRET"
+          fi
+
+          if [ -n "$ADOBE_ORGANIZATION_ID" ]; then
+            set_backend_env "ADOBE_ORGANIZATION_ID" "$ADOBE_ORGANIZATION_ID"
           fi
 
           echo "--- Installing System Dependencies for Chromium and LibreOffice ---"
@@ -109,11 +143,13 @@ jobs:
 
           echo "--- Restarting PM2 Services ---"
           pm2 delete movifile 2>/dev/null || true
-          pm2 delete movifile-backend 2>/dev/null || true
-          pm2 start server.js --name movifile-backend --cwd "$DEPLOY_PATH/backend" --update-env
+          cd "$DEPLOY_PATH/backend"
+          PORT="$BACKEND_PORT" NODE_ENV=production pm2 restart movifile-backend --update-env 2>/dev/null \
+            || PORT="$BACKEND_PORT" NODE_ENV=production pm2 start server.js --name movifile-backend --update-env
 
-          pm2 delete movifile-frontend 2>/dev/null || true
-          PORT="$FRONTEND_PORT" pm2 start npm --name movifile-frontend --cwd "$DEPLOY_PATH/frontend" -- start -- -p "$FRONTEND_PORT"
+          cd "$DEPLOY_PATH/frontend"
+          PORT="$FRONTEND_PORT" NODE_ENV=production pm2 restart movifile-frontend --update-env 2>/dev/null \
+            || PORT="$FRONTEND_PORT" NODE_ENV=production pm2 start npm --name movifile-frontend -- start -- -p "$FRONTEND_PORT"
 
           pm2 save
 

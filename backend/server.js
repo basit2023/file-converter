@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const { Readable } = require('stream');
 const { execFile } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
@@ -21,6 +22,16 @@ const sharp = require('sharp');
 const { PDFParse } = require('pdf-parse');
 const mammoth = require('mammoth');
 const puppeteer = require('puppeteer');
+const { Document, Packer, Paragraph, TextRun } = require('docx');
+const {
+    ServicePrincipalCredentials,
+    PDFServices,
+    MimeType,
+    ExportPDFJob,
+    ExportPDFParams,
+    ExportPDFTargetFormat,
+    ExportPDFResult,
+} = require('@adobe/pdfservices-node-sdk');
 
 const getBrowserExecutablePath = () => {
     const candidates = [
@@ -99,6 +110,24 @@ const OFFICE_FILTERS = {
     pdf: 'pdf:writer_pdf_Export',
 };
 
+const getAdobeCredentials = () => ({
+    clientId: process.env.PDF_SERVICES_CLIENT_ID || process.env.ADOBE_PDF_CLIENT_ID || process.env.ADOBE_CLIENT_ID,
+    clientSecret: process.env.PDF_SERVICES_CLIENT_SECRET || process.env.ADOBE_PDF_CLIENT_SECRET || process.env.ADOBE_CLIENT_SECRET,
+});
+
+const isAdobePdfServicesConfigured = () => {
+    const credentials = getAdobeCredentials();
+    return Boolean(credentials.clientId && credentials.clientSecret);
+};
+
+const streamToBuffer = (readStream) => new Promise((resolve, reject) => {
+    const chunks = [];
+
+    readStream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+    readStream.on('error', reject);
+    readStream.on('end', () => resolve(Buffer.concat(chunks)));
+});
+
 const findConvertedFile = async (directory, basename, outputExtension) => {
     const files = await fs.promises.readdir(directory);
     const wantedExtension = `.${outputExtension.toLowerCase()}`;
@@ -158,6 +187,74 @@ const convertWithLibreOffice = async (inputBuffer, inputExtension, outputExtensi
         fs.promises.rm(jobDir, { recursive: true, force: true }).catch((err) => {
             console.error(`Error deleting LibreOffice temp directory ${jobDir}:`, err.message);
         });
+    }
+};
+
+const convertPdfToWordWithAdobe = async (inputBuffer) => {
+    const { clientId, clientSecret } = getAdobeCredentials();
+
+    if (!clientId || !clientSecret) {
+        return null;
+    }
+
+    const credentials = new ServicePrincipalCredentials({
+        clientId,
+        clientSecret,
+    });
+    const pdfServices = new PDFServices({ credentials });
+    const readStream = Readable.from([inputBuffer]);
+
+    try {
+        const inputAsset = await pdfServices.upload({
+            readStream,
+            mimeType: MimeType.PDF,
+        });
+        const params = new ExportPDFParams({
+            targetFormat: ExportPDFTargetFormat.DOCX,
+        });
+        const job = new ExportPDFJob({ inputAsset, params });
+        const pollingURL = await pdfServices.submit({ job });
+        const pdfServicesResponse = await pdfServices.getJobResult({
+            pollingURL,
+            resultType: ExportPDFResult,
+        });
+        const resultAsset = pdfServicesResponse.result.asset;
+        const streamAsset = await pdfServices.getContent({ asset: resultAsset });
+
+        return await streamToBuffer(streamAsset.readStream);
+    } finally {
+        readStream.destroy();
+    }
+};
+
+const convertPdfToBasicWord = async (inputBuffer) => {
+    const parser = new PDFParse({ data: inputBuffer });
+
+    try {
+        const result = await parser.getText();
+        const paragraphs = result.text
+            .split(/\n{2,}/)
+            .map(block => block.replace(/\n/g, ' ').trim())
+            .filter(Boolean)
+            .map(block => new Paragraph({
+                spacing: { after: 160 },
+                children: [new TextRun(block)],
+            }));
+
+        const doc = new Document({
+            sections: [{
+                properties: {},
+                children: paragraphs.length > 0 ? paragraphs : [
+                    new Paragraph({
+                        children: [new TextRun('No selectable text was found in this PDF.')],
+                    }),
+                ],
+            }],
+        });
+
+        return await Packer.toBuffer(doc);
+    } finally {
+        await parser.destroy();
     }
 };
 
@@ -272,7 +369,28 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
             }
 
             case 'pdf-to-word': {
-                outputBuffer = await convertWithLibreOffice(inputBuffer, inputExt || '.pdf', 'docx', { required: true });
+                if (isAdobePdfServicesConfigured()) {
+                    try {
+                        outputBuffer = await convertPdfToWordWithAdobe(inputBuffer);
+                    } catch (error) {
+                        console.error('Adobe PDF Services PDF to DOCX conversion failed:', error.message);
+                    }
+                } else {
+                    console.warn('Adobe PDF Services credentials are not configured; using local PDF to Word fallback.');
+                }
+
+                if (!outputBuffer) {
+                    try {
+                        outputBuffer = await convertWithLibreOffice(inputBuffer, inputExt || '.pdf', 'docx');
+                    } catch (error) {
+                        console.warn('LibreOffice PDF to DOCX conversion failed, falling back to text extraction:', error.message);
+                    }
+                }
+
+                if (!outputBuffer) {
+                    outputBuffer = await convertPdfToBasicWord(inputBuffer);
+                }
+
                 responseFilename = 'converted.docx';
                 contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
                 break;
@@ -364,4 +482,5 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`NODE_ENV=${process.env.NODE_ENV}`);
     console.log(`Process PID: ${process.pid}`);
     console.log(`LibreOffice path: ${getLibreOfficeExecutablePath() || 'not found'}`);
+    console.log(`Adobe PDF Services: ${isAdobePdfServicesConfigured() ? 'configured' : 'not configured'}`);
 });
