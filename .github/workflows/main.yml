@@ -98,7 +98,7 @@ jobs:
 
           command -v libreoffice >/dev/null || command -v soffice >/dev/null
 
-          echo "--- Building Frontend ---"
+          echo "--- Building Frontend code ---"
           cd frontend
           npm ci
           npm run build
