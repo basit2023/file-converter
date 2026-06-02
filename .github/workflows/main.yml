@@ -117,7 +117,7 @@ jobs:
           sudo apt-get update -qq
 
           sudo apt-get install -y -qq libreoffice libreoffice-writer libreoffice-draw \
-            fonts-liberation fonts-dejavu fonts-noto fonts-crosextra-carlito fonts-crosextra-caladea
+            poppler-utils fonts-liberation fonts-dejavu fonts-noto fonts-crosextra-carlito fonts-crosextra-caladea
 
           if apt-cache policy libasound2 | grep -q "Candidate: [^(]"; then
             ALSA_PACKAGE=libasound2

@@ -169,10 +169,10 @@ export const CONVERSION_TYPES: ConversionType[] = [
     label: 'PDF to Word', 
     icon: 'DOCX', 
     category: 'PDF',
-    description: 'Convert PDF files to editable Microsoft Word (.docx) documents.',
-    longDescription: 'Need to edit a PDF? Our PDF to Word converter transforms your static PDF files into fully editable Microsoft Word (.docx) documents. We extract the text content and recreate it as a properly formatted Word document that you can open, edit, and save in Microsoft Word, Google Docs, LibreOffice, or any other word processor. This is perfect for editing contracts, updating resumes, and modifying reports without having to retype everything from scratch.',
+    description: 'Convert PDF files to Microsoft Word (.docx) while preserving the original page layout.',
+    longDescription: 'Need a Word copy that keeps your PDF looking the same? Our PDF to Word converter preserves the original page appearance by placing each PDF page into a Word document with the same visual layout. This is ideal for sharing, archiving, printing, and keeping resumes, forms, invoices, and reports from shifting during conversion.',
     faqs: [
-      { question: 'Will the formatting be preserved?', answer: 'We preserve the text content and basic paragraph structure. Complex layouts, columns, and embedded graphics may require minor manual adjustment in the output Word document.' },
+      { question: 'Will the formatting be preserved?', answer: 'Yes. For best visual accuracy, the converter keeps each PDF page as a full-page image inside the Word document. This preserves the look, but the text may not be directly editable.' },
       { question: 'Does it work with any PDF?', answer: 'Yes, our tool works with any standard text-based PDF. Scanned PDFs, which are essentially images, will require OCR. That feature is coming soon.' },
       { question: 'Can I open the .docx file in Google Docs?', answer: 'Yes, the output .docx file is fully compatible with Microsoft Word, Google Docs, LibreOffice Writer, and other word processors.' },
       { question: 'Is there a page limit?', answer: 'There is no page limit, but the file size must be under 10MB. Most standard PDF documents fall well within this limit.' },

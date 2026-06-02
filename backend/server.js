@@ -22,7 +22,7 @@ const sharp = require('sharp');
 const { PDFParse } = require('pdf-parse');
 const mammoth = require('mammoth');
 const puppeteer = require('puppeteer');
-const { Document, Packer, Paragraph, TextRun } = require('docx');
+const { Document, Packer, Paragraph, TextRun, ImageRun, PageBreak } = require('docx');
 const {
     ServicePrincipalCredentials,
     PDFServices,
@@ -88,6 +88,18 @@ const getLibreOfficeExecutablePath = () => {
         '/usr/bin/libreoffice',
         '/usr/bin/soffice',
         '/snap/bin/libreoffice',
+    ].filter(Boolean);
+
+    return candidates.find((candidate) => fs.existsSync(candidate));
+};
+
+const getPdfToImageExecutablePath = () => {
+    const candidates = [
+        process.env.PDFTOPPM_PATH,
+        'C:\\Program Files\\poppler\\Library\\bin\\pdftoppm.exe',
+        'C:\\Program Files\\poppler\\bin\\pdftoppm.exe',
+        '/usr/bin/pdftoppm',
+        '/usr/local/bin/pdftoppm',
     ].filter(Boolean);
 
     return candidates.find((candidate) => fs.existsSync(candidate));
@@ -224,6 +236,90 @@ const convertPdfToWordWithAdobe = async (inputBuffer) => {
         return await streamToBuffer(streamAsset.readStream);
     } finally {
         readStream.destroy();
+    }
+};
+
+const convertPdfToVisualWord = async (inputBuffer) => {
+    const pdftoppmPath = getPdfToImageExecutablePath();
+    if (!pdftoppmPath) {
+        return null;
+    }
+
+    const jobId = uuidv4();
+    const jobDir = path.join(uploadDir, jobId);
+    const inputPathForPdf = path.join(jobDir, 'source.pdf');
+    const outputPrefix = path.join(jobDir, 'page');
+
+    try {
+        await fs.promises.mkdir(jobDir, { recursive: true });
+        await fs.promises.writeFile(inputPathForPdf, inputBuffer);
+
+        await execFileAsync(pdftoppmPath, [
+            '-png',
+            '-r',
+            '180',
+            inputPathForPdf,
+            outputPrefix,
+        ]);
+
+        const imageFiles = (await fs.promises.readdir(jobDir))
+            .filter((file) => /^page-\d+\.png$/i.test(file))
+            .sort((a, b) => {
+                const pageA = Number(a.match(/\d+/)[0]);
+                const pageB = Number(b.match(/\d+/)[0]);
+                return pageA - pageB;
+            });
+
+        if (imageFiles.length === 0) {
+            throw new Error('PDF page renderer did not produce any images.');
+        }
+
+        const children = [];
+        for (const [index, file] of imageFiles.entries()) {
+            const imagePath = path.join(jobDir, file);
+            const imageBuffer = await fs.promises.readFile(imagePath);
+            const metadata = await sharp(imageBuffer).metadata();
+            const width = 794;
+            const height = Math.round(width * ((metadata.height || 1123) / (metadata.width || 794)));
+
+            children.push(new Paragraph({
+                spacing: { before: 0, after: 0 },
+                children: [
+                    new ImageRun({
+                        data: imageBuffer,
+                        type: 'png',
+                        transformation: { width, height },
+                    }),
+                    ...(index < imageFiles.length - 1 ? [new PageBreak()] : []),
+                ],
+            }));
+        }
+
+        const doc = new Document({
+            sections: [{
+                properties: {
+                    page: {
+                        size: {
+                            width: 11906,
+                            height: 16838,
+                        },
+                        margin: {
+                            top: 0,
+                            right: 0,
+                            bottom: 0,
+                            left: 0,
+                        },
+                    },
+                },
+                children,
+            }],
+        });
+
+        return await Packer.toBuffer(doc);
+    } finally {
+        fs.promises.rm(jobDir, { recursive: true, force: true }).catch((err) => {
+            console.error(`Error deleting PDF visual Word temp directory ${jobDir}:`, err.message);
+        });
     }
 };
 
@@ -369,13 +465,15 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
             }
 
             case 'pdf-to-word': {
-                if (isAdobePdfServicesConfigured()) {
+                outputBuffer = await convertPdfToVisualWord(inputBuffer);
+
+                if (!outputBuffer && isAdobePdfServicesConfigured()) {
                     try {
                         outputBuffer = await convertPdfToWordWithAdobe(inputBuffer);
                     } catch (error) {
                         console.error('Adobe PDF Services PDF to DOCX conversion failed:', error.message);
                     }
-                } else {
+                } else if (!outputBuffer) {
                     console.warn('Adobe PDF Services credentials are not configured; using local PDF to Word fallback.');
                 }
 
@@ -482,5 +580,6 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`NODE_ENV=${process.env.NODE_ENV}`);
     console.log(`Process PID: ${process.pid}`);
     console.log(`LibreOffice path: ${getLibreOfficeExecutablePath() || 'not found'}`);
+    console.log(`PDF page renderer path: ${getPdfToImageExecutablePath() || 'not found'}`);
     console.log(`Adobe PDF Services: ${isAdobePdfServicesConfigured() ? 'configured' : 'not configured'}`);
 });
