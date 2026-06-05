@@ -146,11 +146,10 @@ jobs:
           pm2 delete movifile 2>/dev/null || true
           cd "$DEPLOY_PATH/backend"
           PORT="$BACKEND_PORT" NODE_ENV=production pm2 restart movifile-backend --update-env 2>/dev/null \
-            || PORT="$BACKEND_PORT" NODE_ENV=production pm2 start server.js --name movifile-backend --update-env
-
+          #      || PORT="$BACKEND_PORT" NODE_ENV=production pm2 start npm --name movifile-backend -- start -- -p "$BACKEND_PORT"
           cd "$DEPLOY_PATH/frontend"
           PORT="$FRONTEND_PORT" NODE_ENV=production pm2 restart movifile-frontend --update-env 2>/dev/null \
-            || PORT="$FRONTEND_PORT" NODE_ENV=production pm2 start npm --name movifile-frontend -- start -- -p "$FRONTEND_PORT"
+            # || PORT="$FRONTEND_PORT" NODE_ENV=production pm2 start npm --name movifile-frontend -- start -- -p "$FRONTEND_PORT"
 
           pm2 save
 
