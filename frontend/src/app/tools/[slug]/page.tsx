@@ -11,14 +11,28 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const tool = CONVERSION_TYPES.find(t => t.slug === slug);
   if (!tool) return { title: "Tool Not Found" };
-  const title = `Free ${tool.label} Converter Online`;
-  const description = `${tool.description} Convert ${tool.label.replace(' to ', ' files to ')} online for free with MoviFile. No registration, no downloads. Fast, secure, and private.`;
+  const isImageResize = tool.id === 'image-resize';
+  const title = isImageResize ? 'Free Image Resizer Online - Resize JPG, PNG, WebP' : `Free ${tool.label} Converter Online`;
+  const description = isImageResize
+    ? 'Resize images online for free with custom width, height, fit mode, and output format. Resize JPG, PNG, and WebP files securely with MoviFile.'
+    : `${tool.description} Convert ${tool.label.replace(' to ', ' files to ')} online for free with MoviFile. No registration, no downloads. Fast, secure, and private.`;
   
   return {
     title,
     description,
     keywords: [
       tool.label.toLowerCase(),
+      ...(isImageResize ? [
+        'image resize',
+        'image resizer',
+        'resize image online',
+        'resize JPG',
+        'resize PNG',
+        'resize WebP',
+        'custom image size',
+        'resize photo online',
+        'free image resizer',
+      ] : []),
       `${tool.label.toLowerCase()} converter`,
       `free ${tool.label.toLowerCase()}`,
       `${tool.label.toLowerCase()} online`,

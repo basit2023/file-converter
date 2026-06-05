@@ -20,6 +20,7 @@ export function Header() {
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-zinc-600 dark:text-zinc-400">
             <Link href="/" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors underline decoration-indigo-500/30 underline-offset-4">Home</Link>
             <Link href="/#tools" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Tools</Link>
+            <Link href="/tools/image-resize" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Image Resize</Link>
             <Link href="/blog" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Blog</Link>
             <Link href="/about" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">About Us</Link>
             <Link href="/contact" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Contact</Link>
