@@ -131,6 +131,7 @@ jobs:
             libgbm1 ca-certificates "$ALSA_PACKAGE"
 
           command -v libreoffice >/dev/null || command -v soffice >/dev/null
+          command -v pdftoppm >/dev/null
 
           echo "--- Building Frontend code ---"
           cd frontend
@@ -154,11 +155,32 @@ jobs:
           pm2 save
 
           echo "--- Verifying Deployment ---"
-          sleep 3
           pm2 status
-          pm2 logs movifile-backend --lines 5 --nostream
-          curl -fsS "http://localhost:$BACKEND_PORT/health"
-          curl -fsS "http://localhost:$FRONTEND_PORT" >/dev/null
+
+          wait_for_http() {
+            name="$1"
+            url="$2"
+
+            for attempt in $(seq 1 30); do
+              if curl -fsS "$url" >/dev/null; then
+                echo "$name is ready: $url"
+                return 0
+              fi
+
+              echo "Waiting for $name at $url (attempt $attempt/30)..."
+              sleep 2
+            done
+
+            echo "ERROR: $name did not become ready: $url"
+            pm2 status || true
+            pm2 logs movifile-backend --lines 30 --nostream || true
+            pm2 logs movifile-frontend --lines 30 --nostream || true
+            ss -ltnp || true
+            return 1
+          }
+
+          wait_for_http "Backend" "http://127.0.0.1:$BACKEND_PORT/health"
+          wait_for_http "Frontend" "http://127.0.0.1:$FRONTEND_PORT"
 
           echo "--- Deployment Complete ---"
           REMOTE

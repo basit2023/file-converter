@@ -10,10 +10,10 @@ export default function Home() {
   const featuredTools = [
     "pdf-to-word",
     "pdf-to-text",
+    "image-resize",
     "jpg-to-png",
     "png-to-jpg",
     "word-to-pdf",
-    "jpg-to-webp",
   ];
 
   return (
@@ -143,7 +143,7 @@ export default function Home() {
 
           <div className="prose prose-zinc max-w-none dark:prose-invert">
             <p>
-              Use MoviFile to <Link href="/tools/pdf-to-word">convert PDF to Word</Link>, <Link href="/tools/pdf-to-text">extract text from PDF</Link>, transform a <Link href="/tools/jpg-to-png">JPG image to PNG</Link>, or create web-friendly <Link href="/tools/png-to-webp">WebP images</Link>. The interface is built for quick repeat use: upload, select, convert, download.
+              Use MoviFile to <Link href="/tools/pdf-to-word">convert PDF to Word</Link>, <Link href="/tools/pdf-to-text">extract text from PDF</Link>, <Link href="/tools/image-resize">resize images</Link>, transform a <Link href="/tools/jpg-to-png">JPG image to PNG</Link>, or create web-friendly <Link href="/tools/png-to-webp">WebP images</Link>. The interface is built for quick repeat use: upload, select, convert, download.
             </p>
             <p>
               MoviFile requires no registration, no email address and no browser extension. The tools support everyday document and image workflows across PDF, Word, JPG, PNG, WebP, GIF, TXT and HTML.

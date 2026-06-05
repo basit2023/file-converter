@@ -17,6 +17,7 @@ const ACCEPT_BY_TYPE: Record<string, string> = {
   'gif-to-png': '.gif,image/gif',
   'webp-to-jpg': '.webp,image/webp',
   'webp-to-png': '.webp,image/webp',
+  'image-resize': '.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp',
   'pdf-to-text': '.pdf,application/pdf',
   'pdf-to-word': '.pdf,application/pdf',
   'pdf-to-jpg': '.pdf,application/pdf',
@@ -31,6 +32,11 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024;
 export function FileUploader({ initialType }: { initialType?: string }) {
   const [file, setFile] = useState<File | null>(null);
   const [type, setType] = useState(initialType || 'pdf-to-text');
+  const [resizeWidth, setResizeWidth] = useState('1200');
+  const [resizeHeight, setResizeHeight] = useState('');
+  const [resizeFit, setResizeFit] = useState('inside');
+  const [resizeFormat, setResizeFormat] = useState('png');
+  const [allowEnlarge, setAllowEnlarge] = useState(false);
   const [status, setStatus] = useState<'idle' | 'uploading' | 'processing' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
@@ -77,6 +83,14 @@ export function FileUploader({ initialType }: { initialType?: string }) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('type', type);
+
+    if (type === 'image-resize') {
+      formData.append('width', resizeWidth);
+      formData.append('height', resizeHeight);
+      formData.append('fit', resizeFit);
+      formData.append('format', resizeFormat);
+      formData.append('allowEnlarge', String(allowEnlarge));
+    }
 
     try {
       const backendUrl = `${process.env.NEXT_PUBLIC_API_URL || '/api'}/convert`;
@@ -186,6 +200,75 @@ export function FileUploader({ initialType }: { initialType?: string }) {
             ))}
           </div>
 
+          {type === 'image-resize' && (
+            <div className="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="space-y-1">
+                  <span className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400">Width</span>
+                  <input
+                    type="number"
+                    min="1"
+                    inputMode="numeric"
+                    value={resizeWidth}
+                    onChange={(e) => setResizeWidth(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 outline-none transition focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+                    placeholder="1200"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400">Height</span>
+                  <input
+                    type="number"
+                    min="1"
+                    inputMode="numeric"
+                    value={resizeHeight}
+                    onChange={(e) => setResizeHeight(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 outline-none transition focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+                    placeholder="Auto"
+                  />
+                </label>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="space-y-1">
+                  <span className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400">Fit</span>
+                  <select
+                    value={resizeFit}
+                    onChange={(e) => setResizeFit(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 outline-none transition focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+                  >
+                    <option value="inside">Keep aspect ratio</option>
+                    <option value="cover">Crop to exact size</option>
+                    <option value="contain">Pad to exact size</option>
+                    <option value="fill">Stretch to exact size</option>
+                  </select>
+                </label>
+                <label className="space-y-1">
+                  <span className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400">Format</span>
+                  <select
+                    value={resizeFormat}
+                    onChange={(e) => setResizeFormat(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 outline-none transition focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+                  >
+                    <option value="png">PNG</option>
+                    <option value="jpg">JPG</option>
+                    <option value="webp">WebP</option>
+                  </select>
+                </label>
+              </div>
+
+              <label className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <input
+                  type="checkbox"
+                  checked={allowEnlarge}
+                  onChange={(e) => setAllowEnlarge(e.target.checked)}
+                  className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                Allow enlargement
+              </label>
+            </div>
+          )}
+
           <div className="pt-4">
             <button
               onClick={handleConvert}
@@ -229,6 +312,7 @@ export function FileUploader({ initialType }: { initialType?: string }) {
               download={`converted-file.${
                 type.includes('to-word') ? 'docx' : 
                 type.includes('to-text') ? 'txt' : 
+                type === 'image-resize' ? (resizeFormat === 'jpeg' ? 'jpg' : resizeFormat) :
                 type.split('-to-')[1]
               }`}
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-8 py-3 font-bold text-white shadow-lg shadow-emerald-600/20 transition-all hover:bg-emerald-700 md:w-auto"

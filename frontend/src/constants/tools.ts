@@ -41,6 +41,20 @@ export const CONVERSION_TYPES: ConversionType[] = [
       { question: 'Why should I convert to WebP for my website?', answer: 'Google recommends WebP for better Core Web Vitals scores. Smaller image files mean faster page loads, which directly improves your SEO rankings and user experience.' },
     ]
   },
+  {
+    id: 'image-resize',
+    slug: 'image-resize',
+    label: 'Image Resize',
+    icon: 'SIZE',
+    category: 'Image',
+    description: 'Resize JPG, PNG, and WebP images to exact dimensions while keeping them crisp.',
+    longDescription: 'Resize images for websites, social media, product listings, documents, and thumbnails without installing editing software. Choose a width, height, fit mode, and output format. The default mode keeps the original aspect ratio so photos, logos, and screenshots do not look stretched.',
+    faqs: [
+      { question: 'Can I keep the original aspect ratio?', answer: 'Yes. The default fit mode keeps the aspect ratio and resizes the image inside your chosen width and height.' },
+      { question: 'Can I resize to an exact size?', answer: 'Yes. Use crop, pad, or stretch mode when you need exact width and height dimensions.' },
+      { question: 'Which image formats are supported?', answer: 'You can upload JPG, PNG, or WebP and export as PNG, JPG, or WebP.' },
+    ],
+  },
   { 
     id: 'pdf-to-text', 
     slug: 'pdf-to-text',

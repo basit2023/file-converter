@@ -22,7 +22,7 @@ const sharp = require('sharp');
 const { PDFParse } = require('pdf-parse');
 const mammoth = require('mammoth');
 const puppeteer = require('puppeteer');
-const { Document, Packer, Paragraph, TextRun, ImageRun, PageBreak } = require('docx');
+const { Document, Packer, Paragraph, TextRun, ImageRun } = require('docx');
 const {
     ServicePrincipalCredentials,
     PDFServices,
@@ -78,6 +78,20 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 const uploadDir = path.join(os.tmpdir(), 'movifile-uploads');
 
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+
+const parsePositiveInteger = (value) => {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+};
+
+const getImageContentType = (format) => ({
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    webp: 'image/webp',
+})[format] || 'image/png';
+
+const getImageOutputExtension = (format) => (format === 'jpeg' ? 'jpg' : format);
 
 const getLibreOfficeExecutablePath = () => {
     const candidates = [
@@ -239,9 +253,13 @@ const convertPdfToWordWithAdobe = async (inputBuffer) => {
     }
 };
 
-const convertPdfToVisualWord = async (inputBuffer) => {
+const convertPdfToVisualWord = async (inputBuffer, options = {}) => {
+    const { required = false } = options;
     const pdftoppmPath = getPdfToImageExecutablePath();
     if (!pdftoppmPath) {
+        if (required) {
+            throw new Error('PDF visual renderer is not installed on the server. Install poppler-utils so PDF to Word can preserve the original format.');
+        }
         return null;
     }
 
@@ -275,33 +293,21 @@ const convertPdfToVisualWord = async (inputBuffer) => {
         }
 
         const children = [];
-        for (const [index, file] of imageFiles.entries()) {
+        for (const file of imageFiles) {
             const imagePath = path.join(jobDir, file);
             const imageBuffer = await fs.promises.readFile(imagePath);
             const metadata = await sharp(imageBuffer).metadata();
+            const pageWidthTwips = 11906;
+            const pageHeightTwips = Math.round(pageWidthTwips * ((metadata.height || 1123) / (metadata.width || 794)));
             const width = 794;
             const height = Math.round(width * ((metadata.height || 1123) / (metadata.width || 794)));
 
-            children.push(new Paragraph({
-                spacing: { before: 0, after: 0 },
-                children: [
-                    new ImageRun({
-                        data: imageBuffer,
-                        type: 'png',
-                        transformation: { width, height },
-                    }),
-                    ...(index < imageFiles.length - 1 ? [new PageBreak()] : []),
-                ],
-            }));
-        }
-
-        const doc = new Document({
-            sections: [{
+            children.push({
                 properties: {
                     page: {
                         size: {
-                            width: 11906,
-                            height: 16838,
+                            width: pageWidthTwips,
+                            height: pageHeightTwips,
                         },
                         margin: {
                             top: 0,
@@ -311,8 +317,23 @@ const convertPdfToVisualWord = async (inputBuffer) => {
                         },
                     },
                 },
-                children,
-            }],
+                children: [
+                    new Paragraph({
+                        spacing: { before: 0, after: 0 },
+                        children: [
+                            new ImageRun({
+                                data: imageBuffer,
+                                type: 'png',
+                                transformation: { width, height },
+                            }),
+                        ],
+                    }),
+                ],
+            });
+        }
+
+        const doc = new Document({
+            sections: children,
         });
 
         return await Packer.toBuffer(doc);
@@ -453,6 +474,46 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
                 contentType = 'image/png';
                 break;
 
+            case 'image-resize': {
+                const width = parsePositiveInteger(req.body.width);
+                const height = parsePositiveInteger(req.body.height);
+                const fit = ['inside', 'cover', 'contain', 'fill'].includes(req.body.fit) ? req.body.fit : 'inside';
+                const format = ['jpg', 'jpeg', 'png', 'webp'].includes(req.body.format) ? req.body.format : 'png';
+
+                if (!width && !height) {
+                    throw new Error('Please enter a width, height, or both to resize the image.');
+                }
+
+                let pipeline = sharp(inputBuffer)
+                    .rotate()
+                    .resize({
+                        width: width || undefined,
+                        height: height || undefined,
+                        fit,
+                        withoutEnlargement: req.body.allowEnlarge !== 'true',
+                        background: { r: 255, g: 255, b: 255, alpha: 1 },
+                    });
+
+                switch (format) {
+                    case 'jpg':
+                    case 'jpeg':
+                        pipeline = pipeline.flatten({ background: '#ffffff' }).jpeg({ quality: 92, mozjpeg: true });
+                        break;
+                    case 'webp':
+                        pipeline = pipeline.webp({ quality: 92 });
+                        break;
+                    case 'png':
+                    default:
+                        pipeline = pipeline.png({ compressionLevel: 9 });
+                        break;
+                }
+
+                outputBuffer = await pipeline.toBuffer();
+                responseFilename = `resized.${getImageOutputExtension(format)}`;
+                contentType = getImageContentType(format);
+                break;
+            }
+
             // PDF Conversions
             case 'pdf-to-text': {
                 const parser = new PDFParse({ data: inputBuffer });
@@ -465,30 +526,7 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
             }
 
             case 'pdf-to-word': {
-                outputBuffer = await convertPdfToVisualWord(inputBuffer);
-
-                if (!outputBuffer && isAdobePdfServicesConfigured()) {
-                    try {
-                        outputBuffer = await convertPdfToWordWithAdobe(inputBuffer);
-                    } catch (error) {
-                        console.error('Adobe PDF Services PDF to DOCX conversion failed:', error.message);
-                    }
-                } else if (!outputBuffer) {
-                    console.warn('Adobe PDF Services credentials are not configured; using local PDF to Word fallback.');
-                }
-
-                if (!outputBuffer) {
-                    try {
-                        outputBuffer = await convertWithLibreOffice(inputBuffer, inputExt || '.pdf', 'docx');
-                    } catch (error) {
-                        console.warn('LibreOffice PDF to DOCX conversion failed, falling back to text extraction:', error.message);
-                    }
-                }
-
-                if (!outputBuffer) {
-                    outputBuffer = await convertPdfToBasicWord(inputBuffer);
-                }
-
+                outputBuffer = await convertPdfToVisualWord(inputBuffer, { required: true });
                 responseFilename = 'converted.docx';
                 contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
                 break;
