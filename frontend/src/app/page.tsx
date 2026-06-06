@@ -30,10 +30,14 @@ export default function Home() {
               </div>
               <div className="space-y-4">
                 <h1 className="max-w-3xl text-4xl font-extrabold leading-tight tracking-tight text-zinc-950 dark:text-white md:text-6xl">
-                  Convert PDF, Word and image files online
+                  Convert and resize PDF, Word and image files online
                 </h1>
                 <p className="max-w-2xl text-lg leading-8 text-zinc-600 dark:text-zinc-300">
-                  Upload a file, choose the format you need, and download the result in seconds. MoviFile supports PDF, DOCX, JPG, PNG, WebP, GIF, TXT and HTML conversions.
+                  Upload a file, choose the format you need, and download the result in seconds. MoviFile converts PDF, DOCX, JPG, PNG, WebP, GIF, TXT and HTML &mdash; and also{" "}
+                  <Link href="/tools/image-resize" className="font-semibold text-indigo-600 underline decoration-indigo-500/40 underline-offset-4 hover:text-indigo-700 dark:text-indigo-400">
+                    resizes images
+                  </Link>{" "}
+                  to any width and height.
                 </p>
               </div>
               <div className="grid grid-cols-1 gap-3 text-sm text-zinc-700 dark:text-zinc-300 sm:grid-cols-3">
