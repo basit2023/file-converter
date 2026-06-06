@@ -4,7 +4,9 @@ import { BLOG_POSTS } from '@/constants/blogs';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://movifile.com';
-  const lastModified = new Date('2026-05-26');
+  // Use the build date so each deploy signals freshness and prompts a recrawl
+  // of the home and tool pages (content lives in source, not a CMS).
+  const lastModified = new Date();
   
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
