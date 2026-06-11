@@ -13,34 +13,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!tool) return { title: "Tool Not Found" };
   const isImageResize = tool.id === 'image-resize';
   const title = isImageResize ? 'Free Image Resizer Online - Resize JPG, PNG, WebP' : `Free ${tool.label} Converter Online`;
-  const description = isImageResize
-    ? 'Resize images online for free with custom width, height, fit mode, and output format. Resize JPG, PNG, and WebP files securely with MoviFile.'
-    : `${tool.description} Convert ${tool.label.replace(' to ', ' files to ')} online for free with MoviFile. No registration, no downloads. Fast, secure, and private.`;
-  
+  const description = tool.metaDescription;
+
   return {
     title,
     description,
-    keywords: [
-      tool.label.toLowerCase(),
-      ...(isImageResize ? [
-        'image resize',
-        'image resizer',
-        'resize image online',
-        'resize JPG',
-        'resize PNG',
-        'resize WebP',
-        'custom image size',
-        'resize photo online',
-        'free image resizer',
-      ] : []),
-      `${tool.label.toLowerCase()} converter`,
-      `free ${tool.label.toLowerCase()}`,
-      `${tool.label.toLowerCase()} online`,
-      `convert ${tool.label.toLowerCase().replace(' to ', ' to ')}`,
-      'free file converter',
-      'online converter',
-      'MoviFile',
-    ],
     alternates: {
       canonical: `https://movifile.com/tools/${slug}`,
     },
@@ -129,14 +106,46 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
       {
         "@type": "ListItem",
         "position": 2,
-        "name": `${tool.category} Tools`,
-        "item": "https://movifile.com/#tools"
+        "name": "All Tools",
+        "item": "https://movifile.com/tools"
       },
       {
         "@type": "ListItem",
         "position": 3,
         "name": tool.label,
         "item": `https://movifile.com/tools/${tool.slug}`
+      }
+    ]
+  };
+
+  const actionWord = tool.id === 'image-resize' ? 'Resize' : 'Convert';
+  const howToJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": `How to ${actionWord} ${tool.label} Online`,
+    "description": tool.description,
+    "totalTime": "PT1M",
+    "step": [
+      {
+        "@type": "HowToStep",
+        "position": 1,
+        "name": "Upload your file",
+        "text": "Click or drag your file into the upload area. Files up to 50MB are supported.",
+        "url": `https://movifile.com/tools/${tool.slug}#converter`
+      },
+      {
+        "@type": "HowToStep",
+        "position": 2,
+        "name": actionWord,
+        "text": `Click "Convert Now" and the server processes your ${tool.label} request in seconds.`,
+        "url": `https://movifile.com/tools/${tool.slug}#converter`
+      },
+      {
+        "@type": "HowToStep",
+        "position": 3,
+        "name": "Download the result",
+        "text": "Your converted file is ready instantly. Click Download to save it.",
+        "url": `https://movifile.com/tools/${tool.slug}#converter`
       }
     ]
   };
@@ -160,13 +169,17 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }}
+      />
+
       <main className="grow container mx-auto px-4 py-10 space-y-14">
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-2 text-xs font-medium text-zinc-500 uppercase tracking-widest" aria-label="Breadcrumb">
           <Link href="/" className="hover:text-indigo-600">Home</Link>
           <ChevronRight className="h-3 w-3" />
-          <span className="text-zinc-400">{tool.category}</span>
+          <Link href="/tools" className="hover:text-indigo-600">{tool.category}</Link>
           <ChevronRight className="h-3 w-3" />
           <span className="text-indigo-600 font-bold">{tool.label}</span>
         </nav>
@@ -189,7 +202,7 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
         </section>
 
         {/* Converter Section */}
-        <section className="scroll-mt-24">
+        <section id="converter" className="scroll-mt-24">
           <FileUploader initialType={tool.id} />
         </section>
 
@@ -199,7 +212,7 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
           <div className="prose prose-zinc dark:prose-invert max-w-none space-y-6">
             <h2 className="text-3xl font-bold text-zinc-900 dark:text-white">How to Convert {tool.label} Online for Free</h2>
             <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">{tool.longDescription}</p>
-            
+
             {/* Step by step */}
             <div className="not-prose grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
               <div className="p-6 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-center">
@@ -232,6 +245,14 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
                 <p className="text-xs text-zinc-500">Our global cloud network processes your files in seconds. No waiting in lines.</p>
               </div>
             </div>
+
+            {/* Unique long-form content */}
+            {tool.sections.map((section) => (
+              <div key={section.heading} className="space-y-3">
+                <h3 className="text-2xl font-bold text-zinc-900 dark:text-white">{section.heading}</h3>
+                <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">{section.body}</p>
+              </div>
+            ))}
           </div>
 
           {/* FAQs */}

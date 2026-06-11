@@ -16,9 +16,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   return {
-    title: `${post.title} | MoviFile Blog`,
+    title: post.title,
     description: post.description,
-    keywords: [...post.keywords, "MoviFile", "free online converter"],
     alternates: {
       canonical: `https://movifile.com/blog/${post.slug}`,
     },

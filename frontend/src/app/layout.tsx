@@ -19,34 +19,6 @@ export const metadata: Metadata = {
     template: "%s | MoviFile",
   },
   description: "Convert files online for free with MoviFile. Transform PDF to Word, PDF to Text, JPG to PNG, PNG to WebP, Word to PDF, and more. No registration, no downloads. Fast, secure, and private file conversion.",
-  keywords: [
-    "free file converter",
-    "online file converter",
-    "PDF to Word",
-    "PDF to Text",
-    "JPG to PNG",
-    "image resize",
-    "image resizer",
-    "resize image online",
-    "resize JPG",
-    "resize PNG",
-    "resize WebP",
-    "PNG to JPG",
-    "PNG to WebP",
-    "JPG to WebP",
-    "Word to PDF",
-    "convert files online",
-    "free PDF converter",
-    "image converter",
-    "document converter",
-    "MoviFile",
-    "movifile.com",
-    "WebP converter",
-    "GIF converter",
-    "Word to HTML",
-    "PDF to JPG",
-    "PDF to PNG",
-  ],
   authors: [{ name: "MoviFile Team", url: "https://movifile.com" }],
   creator: "MoviFile",
   publisher: "MoviFile",
@@ -167,7 +139,15 @@ const websiteLd = {
     "@type": "Organization",
     "name": "MoviFile"
   },
-  "inLanguage": "en-US"
+  "inLanguage": "en-US",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "https://movifile.com/tools?q={search_term_string}"
+    },
+    "query-input": "required name=search_term_string"
+  }
 };
 
 const organizationLd = {

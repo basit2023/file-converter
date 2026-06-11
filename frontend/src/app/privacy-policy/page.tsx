@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | MoviFile",
+  title: "Privacy Policy",
   description: "Read MoviFile's privacy policy. Learn how we handle your files, protect your data, and ensure your privacy when using our free online file conversion tools.",
 };
 

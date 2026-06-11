@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Disclaimer | MoviFile",
+  title: "Disclaimer",
   description: "Read the legal disclaimer for MoviFile. Understand the limitations of our free online file conversion service.",
 };
 

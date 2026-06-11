@@ -75,7 +75,10 @@ export default function Home() {
           <div className="max-w-2xl space-y-3">
             <h2 className="text-3xl font-bold tracking-tight text-zinc-950 dark:text-white">Choose a Free Conversion Tool</h2>
             <p className="text-zinc-600 dark:text-zinc-400">
-              Each converter has a dedicated page with instructions, FAQs, and direct upload support.
+              Each converter has a dedicated page with instructions, FAQs, and direct upload support.{" "}
+              <Link href="/tools" className="font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
+                Browse all tools
+              </Link>.
             </p>
           </div>
 

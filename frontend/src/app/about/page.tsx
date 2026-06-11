@@ -5,8 +5,11 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "About MoviFile | Free Online File Converter",
-  description: "Learn about MoviFile, the free online file converter trusted by thousands of users worldwide. Fast, secure, and private file conversions with no registration required.",
+  title: { absolute: "About MoviFile - Free Online File Converter" },
+  description: "Learn about MoviFile, the free online file converter for PDF, Word and images. Fast, secure, private conversions with no registration and a 50MB upload limit.",
+  alternates: {
+    canonical: "https://movifile.com/about",
+  },
 };
 
 export default function About() {
@@ -29,7 +32,7 @@ export default function About() {
           {[
             { label: 'Conversion Tools', value: '17+' },
             { label: 'Formats Supported', value: '10+' },
-            { label: 'Max File Size', value: '10MB' },
+            { label: 'Max File Size', value: '50MB' },
             { label: 'Registration', value: 'None' },
           ].map((stat) => (
             <div key={stat.label} className="text-center p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
