@@ -133,14 +133,31 @@ jobs:
           command -v libreoffice >/dev/null || command -v soffice >/dev/null
           command -v pdftoppm >/dev/null
 
+          echo "--- Ensuring swap is available for the build ---"
+          if ! swapon --show 2>/dev/null | grep -q .; then
+            echo "No active swap found, creating a 4G swapfile..."
+            sudo fallocate -l 4G /swapfile 2>/dev/null || sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
+            sudo chmod 600 /swapfile
+            sudo mkswap /swapfile
+            sudo swapon /swapfile || echo "WARNING: swapon failed (likely a memory-capped container)."
+            grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+          fi
+          free -h || true
+
+          echo "--- Freeing RAM: stopping running services during the build ---"
+          pm2 stop movifile-frontend movifile-backend 2>/dev/null || true
+          # Kill any lingering Chromium from previous conversions so it does not eat RAM during the build
+          pkill -f 'chrome|chromium' 2>/dev/null || true
+
           echo "--- Building Frontend code ---"
           cd frontend
-          npm ci
+          export NODE_OPTIONS="--max-old-space-size=2048"
+          npm ci --no-audit --no-fund
           npm run build
 
           echo "--- Installing Backend Dependencies ---"
           cd ../backend
-          npm ci
+          npm ci --no-audit --no-fund
 
           echo "--- Restarting PM2 Services ---"
           pm2 delete movifile 2>/dev/null || true
