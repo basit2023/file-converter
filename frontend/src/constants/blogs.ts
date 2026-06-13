@@ -11,7 +11,7 @@ export interface BlogPost {
     body: string[];
   }[];
 }
-
+// update the code
 export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "how-to-convert-a-scanned-pdf-to-editable-text-free",
