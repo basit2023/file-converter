@@ -1,0 +1,5 @@
+# Local-only files: never upload to Vercel
+tmp/
+docs/
+.next/
+.next-*/
