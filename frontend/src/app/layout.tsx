@@ -15,22 +15,19 @@ export const metadata: Metadata = {
   applicationName: "MoviFile",
   referrer: "origin-when-cross-origin",
   title: {
-    default: "MoviFile | Free Online File Converter - PDF, Word, JPG, PNG, WebP",
+    default: "Free Online File Converter for PDF, Word & Images | MoviFile",
     template: "%s | MoviFile",
   },
-  description: "Convert files online for free with MoviFile. Transform PDF to Word, PDF to Text, JPG to PNG, PNG to WebP, Word to PDF, and more. No registration, no downloads. Fast, secure, and private file conversion.",
+  description: "Convert PDF, Word, JPG, PNG and WebP files online free. Fast 50MB uploads, no sign-up and private processing. Convert and download in seconds.",
   authors: [{ name: "MoviFile Team", url: "https://movifile.com" }],
   creator: "MoviFile",
   publisher: "MoviFile",
   metadataBase: new URL("https://movifile.com"),
   manifest: "/site.webmanifest",
-  alternates: {
-    canonical: "/",
-  },
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "48x48", type: "image/x-icon" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
     ],
     shortcut: "/favicon.ico",
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
@@ -40,8 +37,8 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://movifile.com",
     siteName: "MoviFile",
-    title: "MoviFile | Free Online File Converter",
-    description: "Convert PDF, Word, JPG, PNG, WebP, and GIF files online for free. No registration required. Fast, secure, and private.",
+    title: "Free Online File Converter for PDF, Word & Images",
+    description: "Convert PDF, Word and image files online free. No sign-up, fast 50MB uploads and private processing.",
     images: [
       {
         url: "/og-image.png",
@@ -53,8 +50,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "MoviFile | Free Online File Converter",
-    description: "Convert PDF, Word, JPG, PNG, WebP, and GIF files online for free. Fast, secure, and private.",
+    title: "Free Online File Converter for PDF, Word & Images",
+    description: "Convert PDF, Word and image files online free. No sign-up, fast 50MB uploads and private processing.",
     images: [
       {
         url: "/og-image.png",
@@ -105,7 +102,7 @@ const jsonLd = {
     "name": "MoviFile",
     "url": "https://movifile.com"
   },
-  "image": "https://movifile.com/og-image.png",
+  "image": "https://movifile.com/icon-512.png",
   "featureList": [
     "PDF to Word Conversion",
     "PDF to Text Extraction",
@@ -133,21 +130,14 @@ const websiteLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   "name": "MoviFile",
-  "url": "https://movifile.com",
+  "alternateName": ["movifile.com", "Movi File"],
+  "url": "https://movifile.com/",
   "description": "Free online file converter for PDF, Word and image files.",
   "publisher": {
     "@type": "Organization",
     "name": "MoviFile"
   },
-  "inLanguage": "en-US",
-  "potentialAction": {
-    "@type": "SearchAction",
-    "target": {
-      "@type": "EntryPoint",
-      "urlTemplate": "https://movifile.com/tools?q={search_term_string}"
-    },
-    "query-input": "required name=search_term_string"
-  }
+  "inLanguage": "en-US"
 };
 
 const organizationLd = {
@@ -155,11 +145,11 @@ const organizationLd = {
   "@type": "Organization",
   "name": "MoviFile",
   "url": "https://movifile.com",
-  "logo": "https://movifile.com/og-image.png",
+  "logo": "https://movifile.com/icon-512.png",
   "image": "https://movifile.com/og-image.png",
   "contactPoint": {
     "@type": "ContactPoint",
-    "email": "support@movifile.com",
+    "email": "fastsitecheck@gmail.com",
     "contactType": "customer support"
   },
   "sameAs": []

@@ -6,24 +6,34 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "indexnow": "node scripts/indexnow.mjs"
   },
   "dependencies": {
+    "@adobe/pdfservices-node-sdk": "^4.1.0",
+    "@napi-rs/canvas": "^1.0.8",
+    "@vercel/blob": "^2.8.0",
+    "docx": "^9.7.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.7.0",
-    "next": "16.2.1",
+    "mammoth": "^1.12.2",
+    "next": "16.3.3",
     "next-themes": "^0.4.6",
+    "nodemailer": "^10.0.10",
+    "pdf-parse": "^2.4.5",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "sharp": "0.35.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
-    "eslint-config-next": "16.2.1",
+    "eslint-config-next": "16.3.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

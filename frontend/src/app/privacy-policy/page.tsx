@@ -4,8 +4,11 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy",
+  title: { absolute: "MoviFile Privacy Policy & File Handling" },
   description: "Read MoviFile's privacy policy. Learn how we handle your files, protect your data, and ensure your privacy when using our free online file conversion tools.",
+  alternates: {
+    canonical: "https://movifile.com/privacy-policy",
+  },
 };
 
 export default function PrivacyPolicy() {
@@ -20,7 +23,7 @@ export default function PrivacyPolicy() {
           <section className="space-y-4">
             <h2 className="text-2xl font-bold text-zinc-900 dark:text-white italic">1. Introduction</h2>
             <p>Welcome to MoviFile (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;). We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you visit our website movifile.com and use our free online file conversion services.</p>
-            <p>By using our services, you agree to the collection and use of information in accordance with this policy. If you have any questions, please contact us at support@movifile.com.</p>
+            <p>By using our services, you agree to the collection and use of information in accordance with this policy. If you have any questions, please contact us at fastsitecheck@gmail.com.</p>
           </section>
 
           <section className="space-y-4">
@@ -30,7 +33,7 @@ export default function PrivacyPolicy() {
             <ul className="list-disc pl-6 space-y-2">
               <li>Processed in real-time on our secure servers</li>
               <li>Never read, analyzed, or accessed by our team</li>
-              <li>Automatically and permanently deleted from our servers immediately after the conversion is complete and the result is available for download</li>
+              <li>Source uploads are deleted after conversion. Converted outputs are deleted after a download is started or when you begin another upload in the same session.</li>
             </ul>
 
             <h3 className="text-xl font-semibold text-zinc-800 dark:text-zinc-200">2.2 Automatically Collected Information</h3>
@@ -97,7 +100,7 @@ export default function PrivacyPolicy() {
             <h2 className="text-2xl font-bold text-zinc-900 dark:text-white italic">8. Contact Us</h2>
             <p>If you have any questions about this Privacy Policy, please contact us:</p>
             <ul className="list-disc pl-6 space-y-2">
-              <li>Email: <a href="mailto:support@movifile.com" className="text-indigo-600 hover:underline">support@movifile.com</a></li>
+              <li>Email: <a href="mailto:fastsitecheck@gmail.com" className="text-indigo-600 hover:underline">fastsitecheck@gmail.com</a></li>
               <li>Contact Page: <Link href="/contact" className="text-indigo-600 hover:underline">movifile.com/contact</Link></li>
             </ul>
           </section>

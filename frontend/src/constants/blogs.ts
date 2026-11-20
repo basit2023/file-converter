@@ -3,6 +3,12 @@ export interface BlogPost {
   title: string;
   description: string;
   date: string;
+  updatedAt?: string;
+  quickAnswer?: string;
+  toolSlugs?: string[];
+  comparison?: { label: string; webp: string; png: string }[];
+  /** Real questions from Search Console queries, answered on the page. */
+  faqs?: { question: string; answer: string }[];
   readTime: string;
   category: string;
   keywords: string[];
@@ -15,13 +21,30 @@ export interface BlogPost {
 export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "how-to-convert-a-scanned-pdf-to-editable-text-free",
-    title: "How to Convert a Scanned PDF to Editable Text for Free",
-    description: "A step-by-step guide to turning a scanned PDF into editable text, why OCR matters, and how to get clean, usable results without paying for software.",
+    title: "Scanned PDF to Editable Text: OCR Steps & Common Fixes",
+    description: "Learn when scanned PDFs need OCR, how to extract editable text, and how searchable PDFs differ from editable documents. Includes checks for empty text output.",
+    updatedAt: "2026-09-25",
+    quickAnswer: "A scanned PDF needs optical character recognition (OCR) before its words can be extracted. OCR adds a text layer; it does not necessarily make the original page layout editable. MoviFile PDF to Text extracts existing text and does not perform OCR. If you cannot select a word in your PDF, run OCR first, then extract the text.",
+    toolSlugs: ["pdf-to-text", "pdf-to-word", "pdf-to-jpg"],
     date: "2026-06-12",
     readTime: "8 min read",
     category: "PDF",
     keywords: ["scanned PDF to text", "convert scanned PDF", "PDF to Text", "OCR PDF free", "extract text from PDF"],
     sections: [
+      {
+        heading: "Choose the output you actually need",
+        body: [
+          "For a searchable PDF, use an OCR tool that saves the original page images with a searchable text layer. For words you can rewrite, export OCR results as DOCX or TXT. For changes to the original PDF page, use a PDF editor with OCR support. These are different tasks: converting a page to JPG does not make its text editable.",
+          "Before paying for a tool, check whether a document application you already use includes OCR. Try one representative page and confirm that it recognizes your document language. Check names, numbers, columns, and tables before processing the complete document."
+        ]
+      },
+      {
+        heading: "Why extracted text is blank or out of order",
+        body: [
+          "An empty TXT download usually means the PDF contains images without a text layer. Test by selecting and copying a sentence in a PDF reader. If copying works but the order is wrong, the source may store columns, headers, or text boxes in a different reading order. Review the extracted result alongside the original rather than assuming that conversion preserves the page layout.",
+          "Password restrictions are a separate issue from OCR. Obtain an unlocked copy from the document owner before conversion; recognizing characters does not remove access restrictions."
+        ]
+      },
       {
         heading: "Scanned PDFs are pictures, not text",
         body: [
@@ -78,12 +101,33 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     slug: "webp-vs-png-for-website-images",
-    title: "WebP vs PNG for Website Images: Which Should You Use?",
-    description: "A practical comparison of WebP and PNG for the web, covering file size, transparency, quality, browser support, and when to convert PNG to WebP.",
+    title: "WebP vs PNG: Which Is Better for Websites?",
+    description: "Is WebP better than PNG? For website images, usually yes: WebP files are smaller and still support transparency. See when PNG is the better choice, with a quick comparison table.",
+    updatedAt: "2026-11-20",
+    quickAnswer: "Is WebP better than PNG? For images on a website, usually yes. WebP files are typically smaller than PNG at similar visual quality, and WebP supports transparency just like PNG, so logos and icons keep their see-through background. All current major browsers support WebP. PNG is the better choice when you need exact, lossless pixels for editing, printing, or software that does not open WebP. A simple rule: keep PNG as your editable original and publish WebP on your site. Always compare your own exported files, because format alone does not guarantee a smaller image.",
+    toolSlugs: ["png-to-webp", "webp-to-png", "image-resize", "jpg-to-webp"],
+    faqs: [
+      { question: "Is WebP better than PNG?", answer: "For images published on a website, usually yes: WebP files are typically smaller at similar visual quality and still support transparency. PNG is better as a lossless editing master, for print, and for software that cannot open WebP." },
+      { question: "Does WebP support transparency?", answer: "Yes. WebP supports a full alpha channel in both lossy and lossless mode, so a transparent PNG logo or icon keeps its see-through background after conversion to WebP." },
+      { question: "Can a WebP have a transparent background?", answer: "Yes. A WebP image can have a fully or partly transparent background, just like PNG. Converting a transparent PNG with the MoviFile PNG to WebP tool keeps the transparent areas." },
+      { question: "Is WebP lower quality than PNG?", answer: "Lossless WebP keeps every pixel exactly, like PNG. Lossy WebP, which is what most sites use, discards a small amount of detail to save space; at high quality settings the difference is usually hard to see. Check small text and sharp edges before replacing a PNG." },
+      { question: "Is WebP smaller than PNG?", answer: "Usually. Lossless WebP is often around a quarter smaller than the same PNG, and lossy WebP can be much smaller. Results vary by image, so compare the actual exported file sizes." },
+      { question: "Should I use WebP or PNG for my website?", answer: "Use WebP for images that visitors download on your pages, because smaller files load faster. Keep the original PNG on your computer so you can edit or re-export it later." },
+    ],
+    comparison: [
+      { label: "Best for", webp: "Publishing images on websites", png: "Editing masters, print, exact pixels" },
+      { label: "File size", webp: "Usually smaller", png: "Usually larger" },
+      { label: "Browser support", webp: "All current major browsers", png: "Every browser and app" },
+      { label: "Compression", webp: "Lossy or lossless", png: "Lossless" },
+      { label: "Transparency", webp: "Full alpha transparency", png: "Full alpha transparency" },
+      { label: "Website delivery", webp: "Often smaller; compare your exports", png: "Useful for exact pixels and compatibility" },
+      { label: "Editing original", webp: "Keep a lossless source separately", png: "Useful lossless master for graphics" },
+      { label: "Converting back", webp: "Lost detail cannot be recovered", png: "Preserves the decoded pixels, not lost detail" }
+    ],
     date: "2026-06-11",
     readTime: "7 min read",
     category: "Image",
-    keywords: ["WebP vs PNG", "PNG to WebP", "website images", "image optimization", "Core Web Vitals images"],
+    keywords: ["WebP vs PNG", "is WebP better than PNG", "PNG vs WebP", "does WebP support transparency", "PNG to WebP", "website images"],
     sections: [
       {
         heading: "Why this choice matters for your site",
@@ -93,7 +137,7 @@ export const BLOG_POSTS: BlogPost[] = [
         ]
       },
       {
-        heading: "File size: WebP wins clearly",
+        heading: "File size: compare exports at the same dimensions",
         body: [
           "The headline difference is size. For the same image, WebP files are typically much smaller than PNG. In lossless mode WebP is usually around a quarter smaller than PNG, and in lossy mode the savings can be far larger while still looking essentially identical on screen.",
           "On a real website, those savings compound. A page with ten transparent PNG graphics might shed a substantial chunk of its total weight just by switching those assets to WebP, with no visible change to the visitor. That translates directly into faster loading, especially on mobile connections where every kilobyte counts.",
@@ -101,7 +145,7 @@ export const BLOG_POSTS: BlogPost[] = [
         ]
       },
       {
-        heading: "Transparency: a tie, and that is the point",
+        heading: "Does WebP support transparency? Yes",
         body: [
           "One reason people hesitate to leave PNG is transparency. PNG is famous for its clean alpha channel, which lets logos and graphics sit on any background without an ugly box around them. The good news is that WebP supports full alpha transparency too.",
           "This is what makes WebP a true replacement for PNG on the web rather than a compromise. You can take a transparent PNG logo, convert it to WebP, and the transparency carries over perfectly at a fraction of the file size. For transparent UI graphics and icons, this combination of small size and preserved transparency is exactly what you want."
@@ -118,7 +162,7 @@ export const BLOG_POSTS: BlogPost[] = [
         heading: "Browser support and compatibility",
         body: [
           "A few years ago, browser support was the main argument for sticking with PNG. That argument has largely disappeared. Every current major browser, including Chrome, Firefox, Safari, Edge, and Opera, fully supports WebP, including its transparency. For the vast majority of visitors, WebP simply works.",
-          "Where PNG still has an edge is outside the browser. Some older desktop applications, a few print workflows, and certain legacy systems do not read WebP. That is why the smart pattern is to author and store your images as PNG, then serve WebP to browsers. If you ever need a PNG back from a WebP file, a WebP to PNG converter will restore it losslessly with transparency intact."
+          "PNG can be useful for editing applications and workflows that do not accept WebP. Converting WebP to PNG preserves its decoded pixels and transparency, but cannot restore detail already discarded by lossy compression. Keep your original source file if future editing matters."
         ]
       },
       {
@@ -131,6 +175,7 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         heading: "How to make the switch",
         body: [
+          "MoviFile currently exports WebP using lossy compression at a quality setting of 90. It is not a lossless WebP export mode. Compare small lettering, edges and transparent areas before replacing an original PNG. Keep the PNG when exact pixel preservation matters more than download size.",
           "Switching is straightforward. Identify the heaviest PNG images on your most important pages, since those give the biggest speed payoff. Run them through a PNG to WebP converter, confirm the transparency and quality look right, and replace the PNG references in your site with the WebP versions.",
           "Keep the original PNG files safe so you can re-export or edit later. Once your key images are WebP, re-test your pages in a speed tool and you should see lighter pages and improved metrics. It is one of the rare optimisations that is quick to do, hard to get wrong, and genuinely noticeable to visitors."
         ]
@@ -327,7 +372,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "how-to-convert-pdf-to-word-without-losing-formatting",
     title: "How to Convert PDF to Word Without Losing Formatting",
-    description: "A practical guide to cleaner PDF to Word results, including what works, what breaks, and how to prepare your file.",
+    description: "Learn how to convert PDF to Word with fewer layout problems, what formatting may change, and how to prepare digital or scanned files before conversion.",
     date: "2026-05-26",
     readTime: "5 min read",
     category: "PDF",
@@ -420,7 +465,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "how-to-make-images-smaller-with-webp",
     title: "How to Make Images Smaller With WebP",
-    description: "Use WebP conversion to reduce image file size, improve website loading speed, and keep good visual quality.",
+    description: "Learn how WebP can reduce image file size, when to use lossy or lossless output, and how to check dimensions, transparency, and visual quality before publishing.",
     date: "2026-05-26",
     readTime: "4 min read",
     category: "Image",
@@ -445,7 +490,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "pdf-to-text-for-students-and-research-notes",
     title: "PDF to Text for Students and Research Notes",
-    description: "A simple workflow for extracting text from PDFs and turning articles, handouts, and reports into usable notes.",
+    description: "Follow a practical PDF-to-text workflow for turning digital articles, handouts, and reports into searchable notes, while recognizing when a scanned file needs OCR.",
     date: "2026-05-26",
     readTime: "3 min read",
     category: "PDF",
@@ -470,7 +515,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "free-online-file-converter-safety-checklist",
     title: "Free Online File Converter Safety Checklist",
-    description: "What to check before uploading documents or images to an online file converter.",
+    description: "Use this safety checklist before uploading documents or images to an online converter: review sensitivity, file handling, HTTPS, limits, and the downloaded result.",
     date: "2026-05-26",
     readTime: "4 min read",
     category: "Privacy",
@@ -495,7 +540,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "pdf-to-jpg-vs-pdf-to-png",
     title: "PDF to JPG vs PDF to PNG: Which Output Is Better?",
-    description: "Choose between JPG and PNG when turning a PDF page into an image.",
+    description: "Compare PDF-to-JPG and PDF-to-PNG output for photos, text, charts, file size, and sharing so you can choose the better image format for each page.",
     date: "2026-05-26",
     readTime: "3 min read",
     category: "PDF",
@@ -520,7 +565,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "how-to-convert-word-to-html-for-clean-web-pages",
     title: "How to Convert Word to HTML for Clean Web Pages",
-    description: "Turn DOCX files into cleaner HTML for blogs, CMS pages, email drafts, and documentation.",
+    description: "Convert DOCX files into cleaner HTML for blogs, CMS pages, email drafts, and documentation, then review headings, lists, links, images, and unsupported styling.",
     date: "2026-05-26",
     readTime: "4 min read",
     category: "Document",
@@ -544,12 +589,21 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     slug: "best-file-formats-for-resumes",
-    title: "Best File Formats for Resumes",
-    description: "Learn when to send a resume as PDF, DOCX, TXT, or image, and how to avoid formatting problems.",
+    title: "PDF or Word for a Resume? Best Resume File Format",
+    description: "Should you send your resume as a PDF or a Word file? PDF is the safest choice for most applications. Learn when to use DOCX instead, and how to convert your resume.",
     date: "2026-05-26",
-    readTime: "4 min read",
+    updatedAt: "2026-11-20",
+    quickAnswer: "PDF or Word for a resume? Send a PDF unless the employer asks for something else. A PDF keeps your fonts, margins and layout exactly as you designed them on any phone or computer, and most job portals and applicant tracking systems accept text-based PDFs. Send a Word (.docx) file only when the job post or recruiter asks for an editable version. Keep your resume in Word so it is easy to update, then convert it to PDF each time you apply.",
+    toolSlugs: ["word-to-pdf", "pdf-to-word", "word-to-text"],
+    faqs: [
+      { question: "Should I send my resume as a PDF or a Word document?", answer: "Send a PDF unless the employer asks for Word. A PDF keeps your layout identical on every device; a Word file can shift if the reader has different fonts or software." },
+      { question: "Can applicant tracking systems read PDF resumes?", answer: "Most can, as long as the PDF contains real text. Export it from Word or Google Docs rather than scanning a printed page, and check that you can highlight the words." },
+      { question: "When is a Word resume better than a PDF?", answer: "When the job post or recruiter asks for a .doc or .docx file, or when a recruiter needs to edit or reformat your resume for a client. Always follow the employer's instructions." },
+      { question: "How do I convert my Word resume to PDF for free?", answer: "Upload the .doc or .docx file to the MoviFile Word to PDF converter, click Convert, and download the PDF. There is no sign-up or watermark. Check page breaks and links before sending." },
+    ],
+    readTime: "5 min read",
     category: "Document",
-    keywords: ["resume PDF", "Word to PDF resume", "resume format"],
+    keywords: ["pdf or word for resume", "resume file format", "resume PDF", "Word to PDF resume", "resume format"],
     sections: [
       {
         heading: "PDF is best for most applications",
@@ -564,13 +618,34 @@ export const BLOG_POSTS: BlogPost[] = [
           "DOCX is better when a recruiter specifically asks for an editable file. Keep a Word version for updates, then convert it to PDF before sharing publicly.",
           "Plain text can help with older application systems, but it removes design and formatting."
         ]
+      },
+      {
+        heading: "PDF vs Word resume: quick comparison",
+        body: [
+          "Layout: a PDF looks the same everywhere, while a Word file can shift if the reader has different fonts or a different version of Word. Editing: Word is easy to edit, a PDF is not, which is good for a finished resume. Applicant tracking systems: most read both formats, as long as the PDF contains real selectable text and is not a scanned image. Sharing on mobile: a PDF opens cleanly in any phone browser or email app.",
+          "If a job post says nothing about format, PDF is the safer default. If it says \"Word\" or \"DOCX\", follow the instruction exactly, because some recruiters edit or annotate resumes."
+        ]
+      },
+      {
+        heading: "Make sure an ATS can read your PDF",
+        body: [
+          "Export the PDF from your Word document instead of scanning or photographing a printed page. Open the PDF and try to highlight a sentence: if you can select the words, the text is readable by software.",
+          "Avoid putting key details such as your name, email or phone number only inside images, text boxes or the page header. Use standard section headings like Experience, Education and Skills, and a common font."
+        ]
+      },
+      {
+        heading: "How to convert your Word resume to PDF",
+        body: [
+          "Upload your .doc or .docx resume to the Word to PDF converter, click Convert, and download the PDF. Open the result and check page breaks, bullet alignment and links before you send it.",
+          "Name the file clearly, for example Firstname-Lastname-Resume.pdf, so a recruiter can find it later. Keep the Word original so you can tailor it for the next application."
+        ]
       }
     ]
   },
   {
     slug: "how-to-convert-webp-to-jpg-or-png",
     title: "How to Convert WebP to JPG or PNG",
-    description: "Make WebP images compatible with apps, printers, editors, and upload forms that do not accept WebP.",
+    description: "Learn when to convert WebP to JPG or PNG for editors, printers, and upload forms, including the tradeoffs for transparency, quality, and file size.",
     date: "2026-05-26",
     readTime: "3 min read",
     category: "Image",
@@ -594,7 +669,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "simple-guide-to-image-conversion-for-social-media",
     title: "Simple Guide to Image Conversion for Social Media",
-    description: "Choose practical image formats for posts, profile pictures, thumbnails, and website previews.",
+    description: "Choose practical JPG, PNG, WebP, and GIF formats for social posts, profile pictures, thumbnails, and link previews while balancing quality and file size.",
     date: "2026-05-26",
     readTime: "4 min read",
     category: "Image",
@@ -618,7 +693,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "why-your-pdf-conversion-looks-different",
     title: "Why Your PDF Conversion Looks Different",
-    description: "Common reasons converted PDFs or Word documents lose layout, spacing, fonts, or tables.",
+    description: "Understand why PDF and Word conversions can change fonts, spacing, page breaks, images, or tables, and learn what to check before sharing the result.",
     date: "2026-05-26",
     readTime: "5 min read",
     category: "PDF",
@@ -643,7 +718,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "online-converter-for-small-business-documents",
     title: "Online Converter for Small Business Documents",
-    description: "Everyday file conversion ideas for invoices, quotes, reports, menus, flyers, and client documents.",
+    description: "Practical file conversion workflows for small-business invoices, quotes, reports, menus, flyers, and client documents, with format and privacy checks.",
     date: "2026-05-26",
     readTime: "4 min read",
     category: "Business",
@@ -668,7 +743,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "how-to-prepare-files-before-uploading-to-a-converter",
     title: "How to Prepare Files Before Uploading to a Converter",
-    description: "A quick checklist for cleaner, faster, and safer file conversions.",
+    description: "Prepare files for cleaner conversions by checking format, size, passwords, fonts, page layout, sensitive information, and the output you actually need.",
     date: "2026-05-26",
     readTime: "3 min read",
     category: "Guide",
@@ -692,7 +767,7 @@ export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "movifile-guide-to-fast-private-file-conversion",
     title: "MoviFile Guide to Fast Private File Conversion",
-    description: "How MoviFile helps with quick PDF, Word, JPG, PNG, WebP, GIF, TXT, and HTML conversions.",
+    description: "See how MoviFile handles common PDF, Word, JPG, PNG, WebP, GIF, TXT, and HTML conversions, including upload limits, output choices, and file cleanup.",
     date: "2026-05-26",
     readTime: "4 min read",
     category: "MoviFile",

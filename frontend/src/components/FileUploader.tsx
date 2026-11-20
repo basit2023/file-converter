@@ -3,6 +3,8 @@
 import React, { useState, useRef } from 'react';
 import { Upload, File, CheckCircle2, AlertCircle, Loader2, Download, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { upload } from '@vercel/blob/client';
+import Link from 'next/link';
 
 import { CONVERSION_TYPES, CATEGORIES } from '@/constants/tools';
 
@@ -22,8 +24,8 @@ const ACCEPT_BY_TYPE: Record<string, string> = {
   'pdf-to-word': '.pdf,application/pdf',
   'pdf-to-jpg': '.pdf,application/pdf',
   'pdf-to-png': '.pdf,application/pdf',
-  'word-to-text': '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'word-to-html': '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'word-to-text': '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'word-to-html': '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'word-to-pdf': '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 };
 
@@ -40,6 +42,9 @@ export function FileUploader({ initialType }: { initialType?: string }) {
   const [status, setStatus] = useState<'idle' | 'uploading' | 'processing' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [resultBlobUrl, setResultBlobUrl] = useState<string | null>(null);
+  const [downloadFilename, setDownloadFilename] = useState('converted-file');
+  const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -49,6 +54,11 @@ export function FileUploader({ initialType }: { initialType?: string }) {
   }, [initialType]);
 
   const resetForFile = (nextFile: File) => {
+    if ((type === 'word-to-html' || type === 'word-to-text') && !nextFile.name.toLowerCase().endsWith('.docx')) {
+      setStatus('error');
+      setError('Please use a DOCX file. Open older DOC files in Word or LibreOffice and save a DOCX copy first.');
+      return;
+    }
     if (nextFile.size > MAX_FILE_SIZE) {
       setStatus('error');
       setError('File is too large. Please upload a file smaller than 50MB.');
@@ -59,6 +69,14 @@ export function FileUploader({ initialType }: { initialType?: string }) {
     setStatus('idle');
     setError(null);
     setDownloadUrl(null);
+    if (resultBlobUrl) {
+      void fetch('/api/cleanup', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ url: resultBlobUrl }),
+      });
+      setResultBlobUrl(null);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,26 +95,34 @@ export function FileUploader({ initialType }: { initialType?: string }) {
   const handleConvert = async () => {
     if (!file) return;
 
-    setStatus('processing');
+    setStatus('uploading');
     setError(null);
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('type', type);
-
-    if (type === 'image-resize') {
-      formData.append('width', resizeWidth);
-      formData.append('height', resizeHeight);
-      formData.append('fit', resizeFit);
-      formData.append('format', resizeFormat);
-      formData.append('allowEnlarge', String(allowEnlarge));
-    }
+    setUploadProgress(0);
 
     try {
-      const backendUrl = `${process.env.NEXT_PUBLIC_API_URL || '/api'}/convert`;
-      const response = await fetch(backendUrl, {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
+      const uploaded = await upload(`inputs/${crypto.randomUUID()}-${safeName}`, file, {
+        access: 'public',
+        handleUploadUrl: '/api/upload',
+        multipart: file.size >= 5 * 1024 * 1024,
+        contentType: file.type || undefined,
+        onUploadProgress: ({ percentage }) => setUploadProgress(Math.round(percentage)),
+      });
+
+      setStatus('processing');
+      const response = await fetch('/api/convert', {
         method: 'POST',
-        body: formData,
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          sourceUrl: uploaded.url,
+          sourceName: file.name,
+          type,
+          width: resizeWidth,
+          height: resizeHeight,
+          fit: resizeFit,
+          format: resizeFormat,
+          allowEnlarge,
+        }),
       });
 
       if (!response.ok) {
@@ -123,9 +149,10 @@ export function FileUploader({ initialType }: { initialType?: string }) {
         throw new Error(errorMessage);
       }
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      setDownloadUrl(url);
+      const result = await response.json() as { downloadUrl: string; blobUrl: string; filename: string };
+      setDownloadUrl(result.downloadUrl);
+      setResultBlobUrl(result.blobUrl);
+      setDownloadFilename(result.filename);
       setStatus('success');
     } catch (err: unknown) {
       console.error(err);
@@ -135,26 +162,38 @@ export function FileUploader({ initialType }: { initialType?: string }) {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6">
+    <div className="mx-auto w-full max-w-2xl space-y-6">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xl shadow-zinc-200/60 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/20 md:p-6"
+        className="rounded-3xl border border-zinc-200/80 bg-white/95 p-5 shadow-2xl shadow-indigo-950/10 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/95 dark:shadow-black/30 md:p-7"
       >
         <div className="space-y-6">
           <div>
-            <h2 className="text-xl font-bold text-zinc-950 dark:text-white">Start converting now</h2>
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Select a file and output type. No account needed.</p>
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.12)]" />
+              <h2 className="text-xl font-extrabold tracking-tight text-zinc-950 dark:text-white">Start converting now</h2>
+            </div>
+            <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">Upload one file, choose the result, and download. No account needed.</p>
           </div>
 
           <div
+            role="button"
+            tabIndex={0}
+            aria-label="Choose a file to convert"
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className={`cursor-pointer group relative flex min-h-44 flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 text-center transition-all ${
+            className={`group relative flex min-h-48 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 text-center transition-all ${
               file 
                 ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-950/30' 
-                : 'border-zinc-300 dark:border-zinc-700 hover:border-indigo-400 dark:hover:border-indigo-500'
+                : 'border-zinc-300 bg-zinc-50/70 hover:border-indigo-400 hover:bg-indigo-50/50 dark:border-zinc-700 dark:bg-zinc-950/40 dark:hover:border-indigo-500 dark:hover:bg-indigo-950/20'
             }`}
           >
             <input 
@@ -164,18 +203,28 @@ export function FileUploader({ initialType }: { initialType?: string }) {
               accept={ACCEPT_BY_TYPE[type]}
               className="hidden" 
             />
-            <div className="mb-4 rounded-full bg-indigo-600/10 p-4 transition-transform group-hover:scale-105 dark:bg-indigo-500/10">
+            <div className="mb-4 rounded-2xl bg-indigo-600/10 p-4 transition-transform group-hover:-translate-y-1 group-hover:scale-105 dark:bg-indigo-500/10">
               {file ? <File className="h-8 w-8 text-indigo-600 dark:text-indigo-400" /> : <Upload className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />}
             </div>
             <p className="max-w-full break-words text-base font-semibold text-zinc-900 dark:text-zinc-100">
-              {file ? file.name : 'Click or Drag & Drop File'}
+              {file ? file.name : 'Drop your file here'}
             </p>
             <p className="text-sm text-zinc-500 mt-1">
-              Supports PDF, Word, JPG, PNG, WebP and GIF up to 50MB
+              or click to browse · PDF, Word and images up to 50MB
             </p>
           </div>
 
-          <div className="space-y-4">
+          {initialType ? (
+            <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-4 dark:border-indigo-900 dark:bg-indigo-950/30">
+              <p className="font-semibold">Selected: {CONVERSION_TYPES.find(tool => tool.id === type)?.label}</p>
+              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
+                {type === 'word-to-html' || type === 'word-to-text'
+                  ? 'Upload a DOCX file up to 50MB. Older DOC files must be saved as DOCX first.'
+                  : 'Your conversion is already selected. Choose a file to get started.'}
+              </p>
+              <Link href="/tools" className="mt-2 inline-block text-sm font-semibold text-indigo-700 underline dark:text-indigo-300">Choose another tool</Link>
+            </div>
+          ) : <div className="space-y-4">
             <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 block">Select conversion type</label>
             {CATEGORIES.map((category) => (
               <div key={category} className="space-y-2">
@@ -185,10 +234,10 @@ export function FileUploader({ initialType }: { initialType?: string }) {
                     <button
                       key={t.id}
                       onClick={() => setType(t.id)}
-                      className={`min-h-20 rounded-lg p-3 text-center text-sm font-semibold transition-all ${
+                      className={`min-h-20 rounded-xl p-3 text-center text-sm font-semibold transition-all ${
                         type === t.id
                           ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
-                          : 'border border-zinc-200 bg-white text-zinc-900 hover:border-indigo-400 hover:bg-indigo-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700'
+                          : 'border border-zinc-200 bg-white text-zinc-900 hover:-translate-y-0.5 hover:border-indigo-400 hover:bg-indigo-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700'
                       }`}
                     >
                       <div className={`mx-auto mb-1 flex h-7 min-w-10 items-center justify-center rounded px-1 text-[9px] font-black ${type === t.id ? 'bg-white/15 text-white' : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-900 dark:text-zinc-300'}`}>{t.icon}</div>
@@ -198,7 +247,7 @@ export function FileUploader({ initialType }: { initialType?: string }) {
                 </div>
               </div>
             ))}
-          </div>
+          </div>}
 
           {type === 'image-resize' && (
             <div className="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
@@ -272,13 +321,13 @@ export function FileUploader({ initialType }: { initialType?: string }) {
           <div className="pt-4">
             <button
               onClick={handleConvert}
-              disabled={!file || status === 'processing'}
+              disabled={!file || status === 'uploading' || status === 'processing'}
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 font-bold text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-zinc-400"
             >
-              {status === 'processing' ? (
+              {status === 'uploading' || status === 'processing' ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  Processing...
+                  {status === 'uploading' ? `Uploading${uploadProgress ? ` ${uploadProgress}%` : '...'}` : 'Converting...'}
                 </>
               ) : (
                 <>
@@ -309,12 +358,19 @@ export function FileUploader({ initialType }: { initialType?: string }) {
             </div>
             <a
               href={downloadUrl}
-              download={`converted-file.${
-                type.includes('to-word') ? 'docx' : 
-                type.includes('to-text') ? 'txt' : 
-                type === 'image-resize' ? (resizeFormat === 'jpeg' ? 'jpg' : resizeFormat) :
-                type.split('-to-')[1]
-              }`}
+              download={downloadFilename}
+              onClick={() => {
+                if (!resultBlobUrl) return;
+                const url = resultBlobUrl;
+                window.setTimeout(() => {
+                  void fetch('/api/cleanup', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({ url }),
+                    keepalive: true,
+                  });
+                }, 60_000);
+              }}
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-8 py-3 font-bold text-white shadow-lg shadow-emerald-600/20 transition-all hover:bg-emerald-700 md:w-auto"
             >
               <Download className="h-5 w-5" />

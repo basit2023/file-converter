@@ -1,7 +1,7 @@
 {
   "name": "MoviFile - Free Online File Converter",
   "short_name": "MoviFile",
-  "description": "Convert PDF, Word, JPG, PNG, WebP, GIF, TXT and HTML files online for free.",
+  "description": "Convert PDF, Word and image files online for free. No sign-up required.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -9,20 +9,16 @@
   "theme_color": "#4f46e5",
   "icons": [
     {
-      "src": "/favicon.ico",
-      "sizes": "16x16 32x32 48x48",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
-    },
-    {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
+      "src": "/icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

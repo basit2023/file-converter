@@ -4,8 +4,11 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Terms of Service",
+  title: { absolute: "MoviFile Terms of Service for File Conversion" },
   description: "Read the Terms of Service for MoviFile. Understand the rules and guidelines for using our free online file conversion tools.",
+  alternates: {
+    canonical: "https://movifile.com/terms",
+  },
 };
 
 export default function Terms() {
@@ -38,7 +41,7 @@ export default function Terms() {
             <p>When you upload a file to MoviFile for conversion:</p>
             <ul className="list-disc pl-6 space-y-2">
               <li>Your file is processed on our secure servers and the converted output is made available for download</li>
-              <li>Both the uploaded and converted files are automatically deleted from our servers after the conversion process is complete</li>
+              <li>The uploaded source is deleted after conversion. The converted output is deleted after a download is started or when another upload replaces it in the same session.</li>
               <li>We do not retain, review, or share any files you upload</li>
               <li>You are solely responsible for ensuring you have the right to upload and convert the files you submit</li>
             </ul>
@@ -85,7 +88,7 @@ export default function Terms() {
             <h2 className="text-2xl font-bold text-zinc-900 dark:text-white italic">9. Contact Us</h2>
             <p>If you have any questions about these Terms, please contact us:</p>
             <ul className="list-disc pl-6 space-y-2">
-              <li>Email: <a href="mailto:support@movifile.com" className="text-indigo-600 hover:underline">support@movifile.com</a></li>
+              <li>Email: <a href="mailto:fastsitecheck@gmail.com" className="text-indigo-600 hover:underline">fastsitecheck@gmail.com</a></li>
               <li>Contact Page: <Link href="/contact" className="text-indigo-600 hover:underline">movifile.com/contact</Link></li>
             </ul>
           </section>

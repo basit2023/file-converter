@@ -23,7 +23,7 @@ export default function About() {
             About <span className="text-indigo-600 dark:text-indigo-400">MoviFile</span>
           </h1>
           <p className="text-xl leading-relaxed text-zinc-600 dark:text-zinc-400">
-            MoviFile was born from a simple need: a fast, secure, and reliable way to convert files online without installing any software, signing up, or worrying about privacy. We believe that professional-grade conversion tools should be free and accessible to everyone.
+            MoviFile provides browser-based conversion for common PDF, Word, and image tasks. You can upload a file, choose an output, and download the result without creating an account or installing software.
           </p>
         </section>
 
@@ -58,7 +58,7 @@ export default function About() {
                 <ShieldCheck className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
               </div>
               <h3 className="font-bold text-xl mb-3 italic text-zinc-900 dark:text-white">Privacy First</h3>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">We use SSL encryption for all file transfers and automatically delete uploaded files immediately after conversion. Your documents, images, and data never leave our secure pipeline.</p>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">Transfers use HTTPS. Source uploads are removed after conversion, while converted outputs are removed after download starts or when you select another file in the same session.</p>
             </div>
             <div className="p-8 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:shadow-xl transition-all group">
               <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-xl w-fit mb-4 group-hover:scale-110 transition-transform">
@@ -77,7 +77,7 @@ export default function About() {
           </div>
           <h2 className="text-3xl font-bold italic text-zinc-900 dark:text-white">Our Mission</h2>
           <p className="text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            Our mission is to democratize file conversion by providing the best free tools on the internet. We believe that converting a PDF to Word, compressing an image, or transforming file formats should never require expensive software or a subscription. MoviFile is built for students, professionals, freelancers, and anyone who needs quick and reliable file conversions without the hassle.
+            Our goal is to make routine file conversion straightforward and transparent. MoviFile focuses on common tasks for students, office teams, designers, and anyone who needs a quick conversion without a subscription.
           </p>
         </section>
 
@@ -89,7 +89,7 @@ export default function About() {
               { icon: '🖼️', title: 'Image Conversions', desc: 'Convert between JPG, PNG, WebP, and GIF formats. Optimize images for web, social media, or print with one click.' },
               { icon: '📄', title: 'PDF Tools', desc: 'Extract text from PDFs, convert PDF to Word (.docx), or turn PDF pages into JPG/PNG images for sharing and presentations.' },
               { icon: '📝', title: 'Document Tools', desc: 'Transform Word documents to PDF for universal sharing, extract raw text, or convert to clean HTML for web publishing.' },
-              { icon: '🔒', title: 'Secure Processing', desc: 'Every file is processed over encrypted connections. We never store your files permanently — they are deleted immediately after conversion.' },
+              { icon: '🔒', title: 'Clear File Handling', desc: 'Transfers use HTTPS. Source uploads are deleted after conversion, and output cleanup begins after download or when another file is selected.' },
             ].map((item) => (
               <div key={item.title} className="flex gap-4 p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:shadow-lg transition-shadow">
                 <div className="text-3xl flex-shrink-0">{item.icon}</div>
@@ -105,7 +105,7 @@ export default function About() {
         {/* CTA */}
         <section className="text-center p-12 rounded-3xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
           <h2 className="text-3xl font-extrabold mb-4 italic">Ready to Convert Your Files?</h2>
-          <p className="text-lg opacity-90 mb-6 max-w-xl mx-auto">Join thousands of users who trust MoviFile for fast, free, and secure file conversions every day.</p>
+          <p className="text-lg opacity-90 mb-6 max-w-xl mx-auto">Choose a converter, upload one file, and review the downloaded result before using it.</p>
           <Link 
             href="/"
             className="inline-flex items-center gap-2 bg-white text-indigo-600 font-bold py-3 px-8 rounded-xl hover:bg-zinc-100 transition-colors shadow-lg"

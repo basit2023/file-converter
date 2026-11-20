@@ -5,7 +5,7 @@ import { Metadata } from "next";
 import { ContactForm } from "./ContactForm";
 
 export const metadata: Metadata = {
-  title: "Contact MoviFile",
+  title: { absolute: "Contact MoviFile Support & Send Feedback" },
   description: "Contact the MoviFile team for support, feedback, or partnership questions about our free online file conversion tools. We reply within 24-48 hours.",
   alternates: {
     canonical: "https://movifile.com/contact",
@@ -29,7 +29,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h3 className="font-bold text-zinc-900 dark:text-white italic">Email Us</h3>
-                  <p className="text-sm text-zinc-500">support@movifile.com</p>
+                  <a href="mailto:fastsitecheck@gmail.com" className="text-sm text-indigo-600 hover:underline dark:text-indigo-400">fastsitecheck@gmail.com</a>
                   <p className="text-xs text-zinc-400 mt-1">For general inquiries and support</p>
                 </div>
               </div>

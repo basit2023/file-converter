@@ -5,15 +5,24 @@ import { ArrowRight, CheckCircle2, FileCode, FileText, Globe, Image, Lock, Shiel
 import { CONVERSION_TYPES, CATEGORIES } from "@/constants/tools";
 import { BLOG_POSTS } from "@/constants/blogs";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "https://movifile.com/",
+  },
+};
 
 export default function Home() {
+  // Ordered by Search Console demand (Nov 2026): pages that already rank
+  // get a stronger internal link from the homepage.
   const featuredTools = [
-    "pdf-to-word",
-    "pdf-to-text",
-    "image-resize",
-    "jpg-to-png",
-    "png-to-jpg",
     "word-to-pdf",
+    "pdf-to-jpg",
+    "word-to-html",
+    "pdf-to-text",
+    "jpg-to-webp",
+    "word-to-text",
   ];
 
   return (
@@ -21,27 +30,29 @@ export default function Home() {
       <Header />
 
       <main className="flex-grow">
-        <section className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-950">
-          <div className="container mx-auto grid items-center gap-10 px-4 py-10 lg:grid-cols-[0.95fr_1.05fr] lg:py-14">
+        <section className="hero-grid relative overflow-hidden border-b border-zinc-200 dark:border-zinc-800">
+          <div className="pointer-events-none absolute -left-24 top-0 h-96 w-96 rounded-full bg-indigo-400/20 blur-3xl dark:bg-indigo-500/10" />
+          <div className="pointer-events-none absolute right-0 top-20 h-80 w-80 rounded-full bg-cyan-300/15 blur-3xl dark:bg-cyan-500/10" />
+          <div className="container relative mx-auto grid items-center gap-12 px-4 py-14 lg:grid-cols-[0.9fr_1.1fr] lg:py-20">
             <div className="space-y-7">
               <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
                 <ShieldCheck className="h-3.5 w-3.5" />
                 Free, private, no sign-up
               </div>
               <div className="space-y-4">
-                <h1 className="max-w-3xl text-4xl font-extrabold leading-tight tracking-tight text-zinc-950 dark:text-white md:text-6xl">
-                  Convert and resize PDF, Word and image files online
+                <h1 className="max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-[-0.05em] text-zinc-950 dark:text-white md:text-6xl lg:text-7xl">
+                  Free online file converter <span className="text-gradient">without the friction.</span>
                 </h1>
                 <p className="max-w-2xl text-lg leading-8 text-zinc-600 dark:text-zinc-300">
-                  Upload a file, choose the format you need, and download the result in seconds. MoviFile converts PDF, DOCX, JPG, PNG, WebP, GIF, TXT and HTML &mdash; and also{" "}
+                  MoviFile (movifile.com) converts PDF, Word and image files free online. Upload, choose a format, and download in seconds &mdash; or{" "}
                   <Link href="/tools/image-resize" className="font-semibold text-indigo-600 underline decoration-indigo-500/40 underline-offset-4 hover:text-indigo-700 dark:text-indigo-400">
                     resizes images
                   </Link>{" "}
-                  to any width and height.
+                  to exact dimensions. No account or email needed.
                 </p>
               </div>
               <div className="grid grid-cols-1 gap-3 text-sm text-zinc-700 dark:text-zinc-300 sm:grid-cols-3">
-                {["17 conversion tools", "Files deleted after processing", "Works on mobile and desktop"].map((item) => (
+                {["18 free conversion tools", "Source files removed after processing", "Works on mobile and desktop"].map((item) => (
                   <div key={item} className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                     <span>{item}</span>
@@ -56,7 +67,7 @@ export default function Home() {
                     <Link
                       key={tool.slug}
                       href={`/tools/${tool.slug}`}
-                      className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-sm font-semibold text-zinc-700 transition hover:border-indigo-500 hover:text-indigo-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200"
+                      className="rounded-full border border-zinc-200 bg-white/80 px-3 py-1.5 text-sm font-semibold text-zinc-700 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-indigo-500 hover:text-indigo-600 dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-zinc-200"
                     >
                       {tool.label}
                     </Link>
@@ -71,7 +82,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="tools" className="container mx-auto space-y-12 px-4 py-16 scroll-mt-24">
+        <section id="tools" className="container mx-auto scroll-mt-24 space-y-12 px-4 py-20">
           <div className="max-w-2xl space-y-3">
             <h2 className="text-3xl font-bold tracking-tight text-zinc-950 dark:text-white">Choose a Free Conversion Tool</h2>
             <p className="text-zinc-600 dark:text-zinc-400">
@@ -94,7 +105,7 @@ export default function Home() {
                     <Link
                       key={tool.slug}
                       href={`/tools/${tool.slug}`}
-                      className="group flex min-h-16 items-center justify-between rounded-lg border border-zinc-200 bg-white p-4 shadow-sm transition hover:border-indigo-500 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
+                      className="group flex min-h-16 items-center justify-between rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-500 hover:shadow-lg hover:shadow-indigo-500/10 dark:border-zinc-800 dark:bg-zinc-900"
                     >
                       <div className="flex items-center gap-3">
                         <span className="flex h-9 min-w-12 items-center justify-center rounded-md bg-zinc-100 px-2 text-[10px] font-black text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
@@ -142,7 +153,7 @@ export default function Home() {
         <section className="container mx-auto max-w-4xl space-y-8 px-4 py-16">
           <div className="space-y-3 text-center">
             <Sparkles className="mx-auto h-6 w-6 text-indigo-600" />
-            <h2 className="text-3xl font-bold tracking-tight text-zinc-950 dark:text-white">The Best Free Online File Converter in 2026</h2>
+            <h2 className="text-3xl font-bold tracking-tight text-zinc-950 dark:text-white">Free tools for everyday documents and images</h2>
             <p className="text-zinc-600 dark:text-zinc-400">
               MoviFile helps students, marketers, designers and office teams convert common files without installing software.
             </p>

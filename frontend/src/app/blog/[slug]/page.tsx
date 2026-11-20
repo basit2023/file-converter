@@ -28,6 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       siteName: "MoviFile",
       type: "article",
       publishedTime: post.date,
+      modifiedTime: post.updatedAt ?? post.date,
       images: [
         {
           url: "/og-image.png",
@@ -65,7 +66,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     notFound();
   }
 
-  const relatedTools = CONVERSION_TYPES.filter((tool) => {
+  const relatedTools = post.toolSlugs
+    ? post.toolSlugs.flatMap(slug => CONVERSION_TYPES.filter(tool => tool.slug === slug))
+    : CONVERSION_TYPES.filter((tool) => {
     const haystack = `${post.title} ${post.description} ${post.keywords.join(" ")}`.toLowerCase();
     return haystack.includes(tool.label.toLowerCase().split(" ")[0]) || haystack.includes(tool.category.toLowerCase());
   }).slice(0, 4);
@@ -76,7 +79,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     headline: post.title,
     description: post.description,
     datePublished: post.date,
-    dateModified: post.date,
+    dateModified: post.updatedAt ?? post.date,
     author: {
       "@type": "Organization",
       name: "MoviFile",
@@ -86,7 +89,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       name: "MoviFile",
       logo: {
         "@type": "ImageObject",
-        url: "https://movifile.com/favicon.ico",
+        url: "https://movifile.com/icon-512.png",
       },
     },
     mainEntityOfPage: `https://movifile.com/blog/${post.slug}`,
@@ -129,6 +132,22 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
+      {post.faqs && post.faqs.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: post.faqs.map((faq) => ({
+                "@type": "Question",
+                name: faq.question,
+                acceptedAnswer: { "@type": "Answer", text: faq.answer },
+              })),
+            }),
+          }}
+        />
+      )}
 
       <main className="grow">
         <article className="container mx-auto max-w-3xl px-4 py-10">
@@ -147,7 +166,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               </span>
               <span className="flex items-center gap-1.5">
                 <CalendarDays className="h-4 w-4" />
-                {new Date(post.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                {post.updatedAt ? "Updated " : "Published "}
+                {new Date(`${post.updatedAt ?? post.date}T00:00:00Z`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })}
               </span>
               <span className="flex items-center gap-1.5">
                 <Clock className="h-4 w-4" />
@@ -160,16 +180,50 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             <p className="text-lg leading-8 text-zinc-600 dark:text-zinc-400">{post.description}</p>
           </header>
 
-          <div className="prose prose-zinc mt-8 max-w-none dark:prose-invert">
+          {post.quickAnswer && (
+            <aside className="mt-8 rounded-2xl border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900 dark:bg-indigo-950/30">
+              <h2 className="text-lg font-bold">Quick answer</h2>
+              <p className="mt-3 leading-7 text-zinc-700 dark:text-zinc-300">{post.quickAnswer}</p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                {relatedTools.map(tool => (
+                  <Link key={tool.slug} href={`/tools/${tool.slug}`} className="font-semibold text-indigo-700 underline underline-offset-4 dark:text-indigo-300">{tool.label}</Link>
+                ))}
+              </div>
+            </aside>
+          )}
+
+          {post.comparison && (
+            <div className="mt-8 overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+              <table className="w-full text-left text-sm">
+                <caption className="p-4 text-left text-lg font-bold">WebP and PNG at a glance</caption>
+                <thead className="bg-zinc-100 dark:bg-zinc-900"><tr>{["Feature", "WebP", "PNG"].map(label => <th key={label} scope="col" className="p-4">{label}</th>)}</tr></thead>
+                <tbody>{post.comparison.map(row => <tr key={row.label} className="border-t border-zinc-200 dark:border-zinc-800"><th scope="row" className="p-4">{row.label}</th><td className="p-4">{row.webp}</td><td className="p-4">{row.png}</td></tr>)}</tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="mt-8 space-y-9">
             {post.sections.map((section) => (
               <section key={section.heading}>
-                <h2>{section.heading}</h2>
+                <h2 className="mb-4 text-2xl font-bold tracking-tight">{section.heading}</h2>
                 {section.body.map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
+                  <p key={paragraph} className="mt-4 leading-8 text-zinc-700 dark:text-zinc-300">{paragraph}</p>
                 ))}
               </section>
             ))}
           </div>
+
+          {post.faqs && post.faqs.length > 0 && (
+            <section className="mt-10 space-y-4">
+              <h2 className="text-2xl font-bold tracking-tight">Frequently asked questions</h2>
+              {post.faqs.map((faq) => (
+                <div key={faq.question} className="rounded-xl border border-zinc-200 p-5 dark:border-zinc-800">
+                  <h3 className="font-bold text-zinc-950 dark:text-white">{faq.question}</h3>
+                  <p className="mt-2 leading-7 text-zinc-700 dark:text-zinc-300">{faq.answer}</p>
+                </div>
+              ))}
+            </section>
+          )}
 
           {relatedTools.length > 0 && (
             <aside className="mt-10 rounded-lg border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900/60">

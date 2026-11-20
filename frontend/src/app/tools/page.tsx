@@ -7,7 +7,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: { absolute: "All File Conversion Tools | MoviFile" },
-  description: "Browse every free MoviFile converter for PDF, Word, and image files. Convert, resize, and extract with 17+ tools. No sign-up, files up to 50MB.",
+  description: "Browse every free MoviFile converter for PDF, Word, and image files. Convert, resize, and extract with 18 tools. No sign-up, files up to 50MB.",
   alternates: {
     canonical: "https://movifile.com/tools",
   },

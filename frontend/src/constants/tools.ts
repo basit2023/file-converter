@@ -9,6 +9,15 @@ export interface ConversionType {
   longDescription: string;
   sections: { heading: string; body: string }[];
   faqs: { question: string; answer: string }[];
+  /** Optional before/after sample shown under the intro (real converter behaviour only). */
+  example?: {
+    title: string;
+    intro: string;
+    inputLabel: string;
+    input: string;
+    outputLabel: string;
+    output: string;
+  };
 }
 
 export const CONVERSION_TYPES: ConversionType[] = [
@@ -128,7 +137,15 @@ export const CONVERSION_TYPES: ConversionType[] = [
     icon: 'PDF',
     category: 'PDF',
     description: 'Extract raw text from PDF documents instantly and accurately.',
-    metaDescription: 'Convert PDF to text free online. Extract clean, editable plain text from digital PDFs instantly for notes, copy, and data. No sign-up, files up to 50MB.',
+    metaDescription: 'Convert PDF to text free online without email or sign-up. Extract clean, copyable plain text from digital PDFs in seconds and download a TXT file. Up to 50MB.',
+    example: {
+      title: 'PDF to text example: what you get',
+      intro: 'The converter reads the real text stored inside a digital PDF and saves it as a plain .txt file. Fonts, colours, images and layout are dropped; the words stay in reading order. Scanned pages contain only pictures of text, so they come out empty until you run OCR first.',
+      inputLabel: 'Your PDF (digital, selectable text)',
+      input: 'INVOICE #1042            ← bold, 18pt, logo beside it\n\nBill to: Sara Khan\nDate: 3 November 2026\n\nWebsite design ...... $450 ← table row\nHosting (1 year) .... $120',
+      outputLabel: 'Plain text (converted.txt, simplified)',
+      output: 'INVOICE #1042\nBill to: Sara Khan\nDate: 3 November 2026\nWebsite design $450\nHosting (1 year) $120',
+    },
     longDescription: 'Our PDF to Text extractor reads the words inside a digital PDF and hands them back as clean, editable plain text. It is built for anyone who needs to reuse the content of a document — for notes, quoting, translation, or data work — without retyping a single line.',
     sections: [
       {
@@ -149,6 +166,7 @@ export const CONVERSION_TYPES: ConversionType[] = [
       },
     ],
     faqs: [
+      { question: 'Do I need an email address to convert PDF to text?', answer: 'No. There is no email field and no account. Upload the PDF, convert it, and download the TXT file straight away.' },
       { question: 'Can it convert scanned PDFs?', answer: 'It works best with text-based (digital) PDFs where the text is already selectable. Scanned PDFs are images of pages and need OCR first, which is a feature we plan to add.' },
       { question: 'Is there a file size limit?', answer: 'Yes, each PDF can be up to 50MB. That covers the vast majority of standard documents, reports, and ebooks.' },
       { question: 'Will the formatting be preserved?', answer: 'No. The output is plain text, so bold, italics, tables, and columns are removed. The tool focuses on extracting the raw text content accurately.' },
@@ -272,7 +290,7 @@ export const CONVERSION_TYPES: ConversionType[] = [
     icon: 'GIF',
     category: 'Image',
     description: 'Convert PNG to GIF format for graphics and simple web images.',
-    metaDescription: 'Convert PNG to GIF free online for legacy apps, email, and simple low-colour graphics. Static single-frame output. No sign-up, files up to 50MB.',
+    metaDescription: 'Convert PNG to GIF free online in seconds. Get a small, widely supported static GIF for email, forums and older apps. No watermark, no sign-up, up to 50MB.',
     longDescription: 'Our PNG to GIF converter turns a PNG into the long-established GIF format. GIF caps out at 256 colours, which makes it best for simple logos, icons, and flat graphics, and for any system that specifically expects a GIF file.',
     sections: [
       {
@@ -488,7 +506,7 @@ export const CONVERSION_TYPES: ConversionType[] = [
     icon: 'JPG',
     category: 'PDF',
     description: 'Turn your PDF pages into high-resolution JPG images.',
-    metaDescription: 'Convert PDF to JPG free online. Turn a PDF page into a high-resolution JPEG image for sharing, social media, and presentations. No sign-up, files up to 50MB.',
+    metaDescription: 'Convert a PDF page to a sharp, high-resolution JPG image free (1600px wide). No watermark, no email, no sign-up. Works on phone or desktop. Files up to 50MB.',
     longDescription: 'Our PDF to JPG converter renders your PDF page as a crisp JPEG image. It is perfect when you want to share a document as a picture, drop a page into a presentation, or display PDF content somewhere a PDF viewer is not available.',
     sections: [
       {
@@ -509,7 +527,8 @@ export const CONVERSION_TYPES: ConversionType[] = [
       },
     ],
     faqs: [
-      { question: 'What resolution is the output image?', answer: 'The page is rendered at a high resolution suitable for viewing, sharing, and light printing. The exact dimensions depend on the original PDF page size.' },
+      { question: 'What resolution is the output image?', answer: 'The page is rendered 1600 pixels wide and saved as a high-quality JPG (quality 92). The height follows the shape of your PDF page, so an A4 or Letter page comes out portrait.' },
+      { question: 'Does the JPG have a watermark?', answer: 'No. The downloaded JPG contains only your PDF page, with no MoviFile logo or watermark added.' },
       { question: 'Does it convert all pages?', answer: 'Currently the tool captures the first page of the PDF as a JPG. Multi-page export is planned for a future update.' },
       { question: 'Should I use JPG or PNG for my PDF page?', answer: 'Use JPG for pages with photos and colour where you want a small, shareable file. Use PDF to PNG when the page is full of text or charts and sharpness matters most.' },
       { question: 'Will the text be readable in the JPG?', answer: 'Yes for normal viewing. Because JPG is lossy, very small text can soften slightly; for the crispest text use the PDF to PNG tool instead.' },
@@ -559,10 +578,22 @@ export const CONVERSION_TYPES: ConversionType[] = [
     label: 'Word to Text',
     icon: 'TXT',
     category: 'Document',
-    description: 'Extract clean, raw text from your Word documents instantly.',
-    metaDescription: 'Convert Word to plain text (.txt) free online. Strip styles, fonts, and images to get clean raw text for CMS, code, and data work. No sign-up, files up to 50MB.',
+    description: 'Convert a DOCX document to a plain TXT file without fonts, styling or images.',
+    metaDescription: 'Convert Word to text free: turn a DOCX into a plain UTF-8 TXT file in seconds. All formatting removed, every word kept. No email, no sign-up, up to 50MB.',
+    example: {
+      title: 'Word to text example: what you get',
+      intro: 'The converter keeps the words and paragraph breaks from your document and removes everything visual: fonts, bold, colours, bullets, table borders and images. The result is a plain UTF-8 .txt file that opens in Notepad, TextEdit or any code editor.',
+      inputLabel: 'Your Word document (.docx)',
+      input: 'Meeting Notes             ← Heading, 20pt, blue\n\nBudget approved for Q1.   ← "approved" in bold\n\n• Hire two designers      ← bulleted list\n• Launch new website',
+      outputLabel: 'Plain text (converted.txt)',
+      output: 'Meeting Notes\n\nBudget approved for Q1.\n\nHire two designers\n\nLaunch new website',
+    },
     longDescription: 'Our Word to Text converter pulls the raw words out of a .docx file and hands them back as a clean plain-text file. It strips every hidden Word style, font, and layout instruction, leaving just the content you can drop into any editor, CMS, or data pipeline.',
     sections: [
+      {
+        heading: 'DOCX to TXT: what your download contains',
+        body: 'Upload a .docx document and download converted.txt encoded as UTF-8. Paragraph text remains readable, while fonts, colours and page layout are removed. For example, a bold heading becomes an ordinary line of text. This is useful for copying an article into a CMS or preparing notes without bringing Word styles along. Text inside images is not extracted: that requires OCR.',
+      },
       {
         heading: 'Why convert Word to plain text',
         body: 'Word documents carry a surprising amount of invisible baggage: style definitions, font records, tracked-change history, and layout metadata. When you paste that into a website editor, a code project, or a data tool, the hidden formatting often causes messy spacing, broken markup, or import errors. Converting to plain text gives you nothing but the words, which is exactly what content systems and scripts want. Writers, developers, and data teams use it to get clean copy that behaves predictably wherever it lands.',
@@ -583,7 +614,7 @@ export const CONVERSION_TYPES: ConversionType[] = [
     faqs: [
       { question: 'Will images be included in the text output?', answer: 'No. Images and other embedded media are stripped during conversion. Only the raw text content is extracted.' },
       { question: 'Are headings and formatting preserved?', answer: 'No. The output is plain text, so visual formatting such as bold, italics, and headings is removed. The text itself, including paragraph line breaks, is kept.' },
-      { question: 'What file types can I upload?', answer: 'You can upload .docx (and .doc) Word documents, and the converter returns a clean .txt plain-text file.' },
+      { question: 'What file types can I upload?', answer: 'This tool accepts .docx documents and returns a UTF-8 .txt file. For an older .doc file, open it in Word or LibreOffice and save a .docx copy first. Renaming the extension does not convert the document.' },
       { question: 'Why would I want plain text instead of keeping Word formatting?', answer: 'Plain text avoids hidden Word styles that cause messy pasting into websites, code, and data tools. It is portable, lightweight, and predictable everywhere.' },
       { question: 'Will tables survive the conversion?', answer: 'Table styling and grid lines are removed, but the text inside the cells is extracted. You would need to re-structure it manually if you want a table again.' },
       { question: 'Is it free with a size limit?', answer: 'Yes, it is free with no registration, and each Word document can be up to 50MB.' },
@@ -595,10 +626,34 @@ export const CONVERSION_TYPES: ConversionType[] = [
     label: 'Word to HTML',
     icon: 'HTML',
     category: 'Document',
-    description: 'Convert Word documents to clean, semantic HTML code.',
-    metaDescription: 'Convert Word to HTML free online. Get clean, semantic HTML5 from .docx without bloated copy-paste styles. Great for blogs and CMS. No sign-up, up to 50MB.',
+    description: 'Convert a DOCX file to HTML with headings, lists, links and tables for your website or CMS.',
+    metaDescription: 'Convert Word DOCX to clean HTML5 code free. Headings, lists, links and tables become simple tags with no Word inline styles. Ready for WordPress or any CMS.',
+    example: {
+      title: 'Word to HTML example: what you get',
+      intro: 'Here is a short Word document and the HTML this converter produces for it. Word styles are turned into standard tags, and no fonts, colours or inline style attributes are added. The real output is on one line; it is shown here with line breaks so it is easy to read.',
+      inputLabel: 'Your Word document (.docx)',
+      input: 'Quarterly Report        ← Heading 1 style\n\nSales grew 12% this quarter.   ← "12%" in bold\n\n• North region            ← bulleted list\n• South region\n\nRead the full report      ← hyperlink',
+      outputLabel: 'Converted HTML (converted.html)',
+      output: '<h1>Quarterly Report</h1>\n<p>Sales grew <strong>12%</strong> this quarter.</p>\n<ul>\n  <li>North region</li>\n  <li>South region</li>\n</ul>\n<p><a href="https://example.com/report">Read the full report</a></p>',
+    },
     longDescription: 'Our Word to HTML converter turns a .docx file into clean, modern HTML that is ready for the web. Instead of the bloated markup you get from copy-pasting out of Word, it produces tidy HTML5 that preserves your headings, lists, links, and basic formatting.',
     sections: [
+      {
+        heading: 'Word "Save as Web Page" vs a clean HTML converter',
+        body: 'Microsoft Word can save a document as a web page, but the file it creates is filled with Office-specific markup: mso- style rules, conditional comments, font declarations on almost every paragraph, and a folder of supporting files. That HTML is built to make the page look like Word, not to fit into your website. This converter does the opposite. It keeps only the meaning of your document, such as headings, paragraphs, bold and italic text, lists, links and tables, and outputs short, clean HTML5 tags. The result is usually a fraction of the size and takes on your site\'s own fonts and colours as soon as you paste it in.',
+      },
+      {
+        heading: 'DOCX to HTML: a practical output example',
+        body: 'A paragraph using the Word Heading 1 style becomes an h1 element. A normal paragraph becomes a p element, and a bulleted list becomes a ul with li items. Download converted.html and inspect the source in a text editor before inserting it into your CMS. The output is content markup, not a complete website theme: your site supplies the fonts, colours and spacing.',
+      },
+      {
+        heading: 'Converting Word tables and older DOC files',
+        body: 'DOCX tables become HTML table elements containing rows and cells; borders and other Word table styling may need CSS. Check merged cells and wide tables on a small screen before publishing. This converter reads DOCX, not the older binary DOC format. Save a DOC file as DOCX in Word or LibreOffice first; changing the filename extension is not enough.',
+      },
+      {
+        heading: 'Before publishing the HTML',
+        body: 'Review links, image descriptions, heading order and table labels before publishing. Only publish content from a trusted document and let your CMS sanitize imported HTML. Semantic conversion removes much of the document styling, but it is not a security review or a guarantee of accessibility.',
+      },
       {
         heading: 'Why convert Word to HTML',
         body: 'Publishing Word content on the web is a common need — blog posts, documentation, newsletters, and CMS pages often start life in Word. The problem is that copying directly from Word into a web editor drags along hundreds of inline styles and junk tags that bloat the page, break your site\'s design, and are painful to maintain. Converting to clean HTML gives you a sensible starting point: structured, readable markup you can paste into a CMS or hand to a developer without first stripping out a mess of Microsoft-specific formatting.',
@@ -618,6 +673,9 @@ export const CONVERSION_TYPES: ConversionType[] = [
     ],
     faqs: [
       { question: 'Is the HTML output clean?', answer: 'Yes. The converter generates semantic HTML5 without the bloated inline styles that copy-pasting from Word typically produces.' },
+      { question: 'Does it create a full HTML page or just the content?', answer: 'Just the content. You get the body markup (headings, paragraphs, lists, links and tables) without an html, head or style wrapper, so it drops straight into a CMS, template or email builder.' },
+      { question: 'How do I use the HTML in WordPress?', answer: 'Open converted.html in a text editor, copy the code, and paste it into a Custom HTML block or the Code editor view in WordPress. Your theme then applies its own fonts and spacing.' },
+      { question: 'Can I convert a DOC file or pasted Word content?', answer: 'This tool converts uploaded DOCX files. Save older DOC documents as DOCX first. It does not currently include a paste-in editor or an HTML editing interface.' },
       { question: 'Are images included in the HTML?', answer: 'The HTML output focuses on text content, headings, lists, and links. Embedded images may need to be added to the HTML separately.' },
       { question: 'Will my headings and lists be preserved?', answer: 'Yes, as long as you used Word\'s real heading styles and list buttons. Those convert to proper HTML heading and list tags.' },
       { question: 'Why not just copy and paste from Word?', answer: 'Pasting from Word brings hundreds of inline styles and junk tags that bloat the page and break your design. Converting gives clean, maintainable markup instead.' },
@@ -632,7 +690,7 @@ export const CONVERSION_TYPES: ConversionType[] = [
     icon: 'PDF',
     category: 'Document',
     description: 'Convert Word documents to professional, fixed-layout PDF files.',
-    metaDescription: 'Convert Word to PDF free online. Lock your .docx layout into a professional, fixed-format PDF that looks identical everywhere. No sign-up, files up to 50MB.',
+    metaDescription: 'Convert DOC or DOCX to PDF free in seconds. Keeps your fonts, tables and page layout. No watermark, no email, no sign-up. Files up to 50MB, deleted after use.',
     longDescription: 'Our Word to PDF converter turns a .docx file into a polished, fixed-layout PDF that looks the same on every device. PDF is the universal standard for sharing professional documents, and converting locks your formatting so resumes, reports, contracts, and proposals always arrive looking right.',
     sections: [
       {
@@ -653,6 +711,9 @@ export const CONVERSION_TYPES: ConversionType[] = [
       },
     ],
     faqs: [
+      { question: 'Does the Word to PDF converter add a watermark?', answer: 'No. The PDF you download has no MoviFile watermark, logo, or added page. It contains only your document.' },
+      { question: 'Can I convert old .doc files as well as .docx?', answer: 'Yes. The Word to PDF converter accepts both the older .doc format and modern .docx files, up to 50MB each.' },
+      { question: 'Do I need to give an email address or create an account?', answer: 'No. Upload your Word file, click Convert, and download the PDF. There is no email field, sign-up, or app to install.' },
       { question: 'Why convert Word to PDF?', answer: 'PDFs are readable on any device without Word, look identical everywhere, and resist accidental edits, which keeps professional documents stable and consistent.' },
       { question: 'Is my data safe during conversion?', answer: 'Yes. Files are transferred over encrypted connections and removed after conversion, so your document does not linger on the server.' },
       { question: 'Will images and formatting be preserved?', answer: 'Yes. The converter preserves headings, paragraphs, lists, and basic formatting so the PDF reflects your document\'s intended layout.' },

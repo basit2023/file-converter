@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CONVERSION_TYPES } from "@/constants/tools";
 import { BLOG_POSTS } from "@/constants/blogs";
+import { BrandLogo } from "./BrandLogo";
 
 export function Footer() {
   const allTools = CONVERSION_TYPES;
@@ -10,9 +11,7 @@ export function Footer() {
     <footer className="w-full border-t border-zinc-200/50 bg-zinc-50 py-16 dark:border-zinc-800/50 dark:bg-zinc-950">
       <div className="container mx-auto grid grid-cols-1 gap-12 px-4 text-center md:grid-cols-6 md:text-left">
         <div className="space-y-4 md:col-span-2">
-          <Link href="/" className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-            Movi<span className="text-indigo-600 underline decoration-2 underline-offset-4 dark:text-indigo-400">File</span>
-          </Link>
+          <BrandLogo />
           <p className="max-w-sm text-sm text-zinc-500">
             Fast and secure file conversions for PDF, Word and image formats. No registration required, free for MoviFile users.
           </p>

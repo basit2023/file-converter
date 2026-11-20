@@ -4,8 +4,11 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Disclaimer",
-  description: "Read the legal disclaimer for MoviFile. Understand the limitations of our free online file conversion service.",
+  title: { absolute: "MoviFile File Conversion Service Disclaimer" },
+  description: "Read the MoviFile disclaimer covering conversion accuracy, file compatibility, service availability, and responsible use of our free online conversion tools.",
+  alternates: {
+    canonical: "https://movifile.com/disclaimer",
+  },
 };
 
 export default function Disclaimer() {
@@ -51,7 +54,7 @@ export default function Disclaimer() {
             <h2 className="text-2xl font-bold text-zinc-900 dark:text-white italic">7. Contact Us</h2>
             <p>If you have any questions or concerns about this Disclaimer, please contact us:</p>
             <ul className="list-disc pl-6 space-y-2">
-              <li>Email: <a href="mailto:support@movifile.com" className="text-indigo-600 hover:underline">support@movifile.com</a></li>
+              <li>Email: <a href="mailto:fastsitecheck@gmail.com" className="text-indigo-600 hover:underline">fastsitecheck@gmail.com</a></li>
               <li>Contact Page: <Link href="/contact" className="text-indigo-600 hover:underline">movifile.com/contact</Link></li>
             </ul>
           </section>
